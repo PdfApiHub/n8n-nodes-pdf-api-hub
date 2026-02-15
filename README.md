@@ -2,7 +2,7 @@
 
 # n8n-nodes-pdf-api-hub
 
-An n8n community node for **PDF API Hub** (Get your api key from https://pdfapihub.com )that can:
+An n8n community node for **PDF API Hub** (Get your api key from [https://pdfapihub.com](https://pdfapihub.com)) that can:
 
 - Parse PDFs and extract text/structured data
 - Merge and split PDFs
