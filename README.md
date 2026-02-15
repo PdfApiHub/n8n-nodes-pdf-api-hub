@@ -1,8 +1,8 @@
-![Banner image](https://user-images.githubusercontent.com/10284570/173569848-c624317f-42b1-45a6-ab09-f0ea3c247648.png)
+![Banner image](images/bannerpdfapihub.png)
 
 # n8n-nodes-pdf-api-hub
 
-An n8n community node for **PDF API Hub** that can:
+An n8n community node for **PDF API Hub** (Get your api key from https://pdfapihub.com )that can:
 
 - Parse PDFs and extract text/structured data
 - Merge and split PDFs
