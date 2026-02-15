@@ -1,4 +1,4 @@
-![Banner image](images/bannerpdfapihub.png)
+[![Banner image](images/bannerpdfapihub.png)](https://pdfapihub.com)
 
 # n8n-nodes-pdf-api-hub
 
