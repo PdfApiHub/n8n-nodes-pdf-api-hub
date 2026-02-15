@@ -8,14 +8,15 @@ import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 export class PdfSplitMerge implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'PDF Parse | Extract | Merge | Convert | Lock | Compress | Screenshot(URL) to PDF',
+		displayName: 'PDF Api Hub | PDF Parse | Extract | Merge | Convert | Lock | Compress | Screenshot(URL) to PDF',
 		name: 'pdfSplitMerge',
 		icon: { light: 'file:../../icons/pdfhub.light.svg', dark: 'file:../../icons/pdfhub.dark.svg' },
 		group: ['transform'],
 		version: 1,
-			description: 'Parse PDFs, merge/split PDFs, and generate PDFs from URLs or HTML using PDF API Hub',
+		description:
+			'Parse PDFs, merge/split PDFs, generate PDFs from URLs/HTML, and compress/lock/unlock PDFs using PDF API Hub',
 		defaults: {
-			name: 'PDF Parse | Extract | Merge | Convert | Lock | Compress | Screenshot(URL) to PDF',
+			name: 'PDF Api Hub | PDF Parse | Extract | Merge | Convert | Lock | Compress | Screenshot(URL) to PDF',
 		},
 		inputs: [NodeConnectionTypes.Main],
 		outputs: [NodeConnectionTypes.Main],
@@ -37,17 +38,22 @@ export class PdfSplitMerge implements INodeType {
 							name: 'PDF Parse / Extract Text',
 						value: 'pdfParsing',
 							description: 'Extract text or structured data from PDFs',
-						},
+					},
 						{
-							name: 'PDF Merge / Split',
+							name: 'PDF Merge / Split / Compress',
 							value: 'pdfManipulation',
-							description: 'Merge or split PDF documents',
+							description: 'Merge, split, or compress PDF documents',
 						},
 						{
 							name: 'Website / HTML to PDF',
 							value: 'pdfCreation',
 							description: 'Capture a website screenshot to PDF or render HTML/CSS to PDF',
-					},
+						},
+						{
+							name: 'PDF Security (Lock / Unlock)',
+							value: 'pdfSecurity',
+							description: 'Lock and unlock password-protected PDFs',
+						},
 				],
 					default: 'pdfParsing',
 			},
@@ -102,8 +108,41 @@ export class PdfSplitMerge implements INodeType {
 						description: 'Split a PDF into multiple files',
 						action: 'Split a pdf',
 					},
+					{
+						name: 'Compress PDF',
+						value: 'compressPdf',
+						description: 'Compress a PDF to reduce file size',
+						action: 'Compress pdf',
+					},
 				],
 				default: 'mergePdf',
+			},
+			// PDF Security Operations
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: {
+					show: {
+						resource: ['pdfSecurity'],
+					},
+				},
+				options: [
+					{
+						name: 'Lock PDF',
+						value: 'lockPdf',
+						description: 'Add password protection to a PDF',
+						action: 'Lock pdf',
+					},
+					{
+						name: 'Unlock PDF',
+						value: 'unlockPdf',
+						description: 'Remove password protection from a PDF',
+						action: 'Unlock pdf',
+					},
+				],
+				default: 'lockPdf',
 			},
 			// PDF Parsing Operations
 			{
@@ -137,6 +176,198 @@ export class PdfSplitMerge implements INodeType {
 				displayOptions: {
 					show: {
 						operation: ['htmlToPdf'],
+					},
+				},
+			},
+
+			// Properties for Compress PDF
+			{
+				displayName: 'PDF URL',
+				name: 'compress_url',
+				type: 'string',
+				default: '',
+				description: 'URL of the PDF to compress',
+				displayOptions: {
+					show: {
+						operation: ['compressPdf'],
+					},
+				},
+			},
+			{
+				displayName: 'Compression Level',
+				name: 'compression',
+				type: 'options',
+				options: [
+					{ name: 'Low', value: 'low' },
+					{ name: 'Medium', value: 'medium' },
+					{ name: 'High', value: 'high' },
+					{ name: 'Max', value: 'max' },
+				],
+				default: 'high',
+				description: 'Compression strength (higher is more aggressive)',
+				displayOptions: {
+					show: {
+						operation: ['compressPdf'],
+					},
+				},
+			},
+			{
+				displayName: 'Output Type',
+				name: 'compress_output',
+				type: 'options',
+				options: [
+					{ name: 'URL', value: 'url' },
+					{ name: 'File', value: 'file' },
+					{ name: 'Base64', value: 'base64' },
+				],
+				default: 'file',
+				description: 'Format of the compressed PDF output',
+				displayOptions: {
+					show: {
+						operation: ['compressPdf'],
+					},
+				},
+			},
+			{
+				displayName: 'Output Filename',
+				name: 'compress_output_name',
+				type: 'string',
+				default: 'compressed.pdf',
+				description: 'Custom name for the output file',
+				displayOptions: {
+					show: {
+						operation: ['compressPdf'],
+					},
+				},
+			},
+
+			// Properties for Lock PDF
+			{
+				displayName: 'PDF URL',
+				name: 'lock_url',
+				type: 'string',
+				default: '',
+				description: 'URL of the PDF to lock',
+				displayOptions: {
+					show: {
+						operation: ['lockPdf'],
+					},
+				},
+			},
+			{
+				displayName: 'Password',
+				name: 'lock_password',
+				type: 'string',
+				typeOptions: {
+					password: true,
+				},
+				default: '',
+				description: 'Password to set on the PDF',
+				displayOptions: {
+					show: {
+						operation: ['lockPdf'],
+					},
+				},
+			},
+			{
+				displayName: 'Input Password',
+				name: 'lock_input_password',
+				type: 'string',
+				typeOptions: {
+					password: true,
+				},
+				default: '',
+				description: 'Optional password if the input PDF is already encrypted',
+				displayOptions: {
+					show: {
+						operation: ['lockPdf'],
+					},
+				},
+			},
+			{
+				displayName: 'Output Type',
+				name: 'lock_output',
+				type: 'options',
+				options: [
+					{ name: 'URL', value: 'url' },
+					{ name: 'File', value: 'file' },
+					{ name: 'Base64', value: 'base64' },
+				],
+				default: 'file',
+				description: 'Format of the locked PDF output',
+				displayOptions: {
+					show: {
+						operation: ['lockPdf'],
+					},
+				},
+			},
+			{
+				displayName: 'Output Filename',
+				name: 'lock_output_name',
+				type: 'string',
+				default: 'locked.pdf',
+				description: 'Custom name for the output file',
+				displayOptions: {
+					show: {
+						operation: ['lockPdf'],
+					},
+				},
+			},
+
+			// Properties for Unlock PDF
+			{
+				displayName: 'PDF URL',
+				name: 'unlock_url',
+				type: 'string',
+				default: '',
+				description: 'URL of the password-protected PDF to unlock',
+				displayOptions: {
+					show: {
+						operation: ['unlockPdf'],
+					},
+				},
+			},
+			{
+				displayName: 'Password',
+				name: 'unlock_password',
+				type: 'string',
+				typeOptions: {
+					password: true,
+				},
+				default: '',
+				description: 'Password to unlock the PDF',
+				displayOptions: {
+					show: {
+						operation: ['unlockPdf'],
+					},
+				},
+			},
+			{
+				displayName: 'Output Type',
+				name: 'unlock_output',
+				type: 'options',
+				options: [
+					{ name: 'URL', value: 'url' },
+					{ name: 'File', value: 'file' },
+					{ name: 'Base64', value: 'base64' },
+				],
+				default: 'file',
+				description: 'Format of the unlocked PDF output',
+				displayOptions: {
+					show: {
+						operation: ['unlockPdf'],
+					},
+				},
+			},
+			{
+				displayName: 'Output Filename',
+				name: 'unlock_output_name',
+				type: 'string',
+				default: 'unlocked.pdf',
+				description: 'Custom name for the output file',
+				displayOptions: {
+					show: {
+						operation: ['unlockPdf'],
 					},
 				},
 			},
@@ -684,6 +915,149 @@ export class PdfSplitMerge implements INodeType {
 							{
 								method: 'POST',
 								url: 'https://pdfapihub.com/api/v1/pdf/split',
+								body,
+								json: true,
+							},
+						);
+						returnData.push({ json: responseData, pairedItem: { item: i } });
+					}
+				} else if (operation === 'compressPdf') {
+					const pdfUrl = this.getNodeParameter('compress_url', i) as string;
+					const compression = this.getNodeParameter('compression', i) as string;
+					const outputType = this.getNodeParameter('compress_output', i) as string;
+					const outputName = this.getNodeParameter('compress_output_name', i) as string;
+
+					const body = {
+						url: pdfUrl,
+						compression,
+						output: outputType,
+						output_name: outputName,
+					};
+
+					if (outputType === 'file') {
+						const responseData = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'pdfapihubApi',
+							{
+								method: 'POST',
+								url: 'https://pdfapihub.com/api/v1/compressPdf',
+								body,
+								json: true,
+								encoding: 'arraybuffer',
+								returnFullResponse: true,
+							},
+						);
+
+						await prepareBinaryResponse(
+							i,
+							responseData as { body: ArrayBuffer; headers?: Record<string, unknown> },
+							outputName,
+							'application/pdf',
+						);
+					} else {
+						const responseData = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'pdfapihubApi',
+							{
+								method: 'POST',
+								url: 'https://pdfapihub.com/api/v1/compressPdf',
+								body,
+								json: true,
+							},
+						);
+						returnData.push({ json: responseData, pairedItem: { item: i } });
+					}
+				} else if (operation === 'lockPdf') {
+					const pdfUrl = this.getNodeParameter('lock_url', i) as string;
+					const password = this.getNodeParameter('lock_password', i) as string;
+					const inputPassword = this.getNodeParameter('lock_input_password', i, '') as string;
+					const outputType = this.getNodeParameter('lock_output', i) as string;
+					const outputName = this.getNodeParameter('lock_output_name', i) as string;
+
+					const body: Record<string, unknown> = {
+						url: pdfUrl,
+						password,
+						output: outputType,
+						output_name: outputName,
+					};
+
+					if (inputPassword) {
+						body.input_password = inputPassword;
+					}
+
+					if (outputType === 'file') {
+						const responseData = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'pdfapihubApi',
+							{
+								method: 'POST',
+								url: 'https://pdfapihub.com/api/v1/lockPdf',
+								body,
+								json: true,
+								encoding: 'arraybuffer',
+								returnFullResponse: true,
+							},
+						);
+
+						await prepareBinaryResponse(
+							i,
+							responseData as { body: ArrayBuffer; headers?: Record<string, unknown> },
+							outputName,
+							'application/pdf',
+						);
+					} else {
+						const responseData = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'pdfapihubApi',
+							{
+								method: 'POST',
+								url: 'https://pdfapihub.com/api/v1/lockPdf',
+								body,
+								json: true,
+							},
+						);
+						returnData.push({ json: responseData, pairedItem: { item: i } });
+					}
+				} else if (operation === 'unlockPdf') {
+					const pdfUrl = this.getNodeParameter('unlock_url', i) as string;
+					const password = this.getNodeParameter('unlock_password', i) as string;
+					const outputType = this.getNodeParameter('unlock_output', i) as string;
+					const outputName = this.getNodeParameter('unlock_output_name', i) as string;
+
+					const body = {
+						url: pdfUrl,
+						password,
+						output: outputType,
+						output_name: outputName,
+					};
+
+					if (outputType === 'file') {
+						const responseData = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'pdfapihubApi',
+							{
+								method: 'POST',
+								url: 'https://pdfapihub.com/api/v1/unlockPdf',
+								body,
+								json: true,
+								encoding: 'arraybuffer',
+								returnFullResponse: true,
+							},
+						);
+
+						await prepareBinaryResponse(
+							i,
+							responseData as { body: ArrayBuffer; headers?: Record<string, unknown> },
+							outputName,
+							'application/pdf',
+						);
+					} else {
+						const responseData = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'pdfapihubApi',
+							{
+								method: 'POST',
+								url: 'https://pdfapihub.com/api/v1/unlockPdf',
 								body,
 								json: true,
 							},

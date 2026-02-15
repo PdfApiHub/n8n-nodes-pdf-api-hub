@@ -1,233 +1,237 @@
 ![Banner image](https://user-images.githubusercontent.com/10284570/173569848-c624317f-42b1-45a6-ab09-f0ea3c247648.png)
 
-# n8n-nodes-pdf-split-merge
+# n8n-nodes-pdf-api-hub
 
-PDF Split & Merge for n8n using the PDF API Hub.
+An n8n community node for **PDF API Hub** that can:
 
-This package adds a node that can:
-- Merge multiple PDF URLs into a single PDF
-- Split a PDF with a configurable mode (e.g., "each")
+- Parse PDFs and extract text/structured data
+- Merge and split PDFs
+- Compress PDFs
+- Lock and unlock password-protected PDFs
+- Convert a website URL to a PDF (screenshot)
+- Convert HTML/CSS to a PDF
 
-Authentication and base URL: the `CLIENT-API-KEY` is sent as a header to `https://pdfapihub.com/api/v1`.
+## Table of contents
 
-## Quick Start
+- [Install](#install)
+- [Get your API key (PDF API Hub)](#get-your-api-key-pdf-api-hub)
+- [Credentials setup (n8n)](#credentials-setup-n8n)
+- [How outputs work (URL vs File vs Base64)](#how-outputs-work-url-vs-file-vs-base64)
+- [Operations](#operations)
+  - [PDF Parse / Extract Text](#pdf-parse--extract-text)
+  - [PDF Merge](#pdf-merge)
+  - [PDF Split](#pdf-split)
+  - [PDF Compress](#pdf-compress)
+  - [PDF Lock](#pdf-lock)
+  - [PDF Unlock](#pdf-unlock)
+  - [URL to PDF (Website Screenshot)](#url-to-pdf-website-screenshot)
+  - [HTML to PDF](#html-to-pdf)
+- [Support](#support)
 
-> [!TIP]
-> **New to building n8n nodes?** The fastest way to get started is with `npm create @n8n/node`. This command scaffolds a complete node package for you using the [@n8n/node-cli](https://www.npmjs.com/package/@n8n/node-cli).
+## Install
 
-**To create a new node package from scratch:**
+Follow the official n8n community node install docs:
+https://docs.n8n.io/integrations/community-nodes/installation/
 
-```bash
-npm create @n8n/node
-```
+In n8n:
 
-**Develop locally:**
+1. Go to **Settings → Community Nodes**
+2. Click **Install a community node**
+3. Enter: `n8n-nodes-pdf-api-hub`
+4. Click **Install**
 
-```bash
-npm run dev
-```
+## Get your API key (PDF API Hub)
 
-This starts n8n with your nodes loaded and hot reload enabled.
+1. Go to https://pdfapihub.com
+2. Sign up / log in
+3. Open your dashboard and find the **API Key / API Keys** section
+4. Create/copy your API key
 
-## Credentials
+If the UI changes, use the official docs as the source of truth:
+https://pdfapihub.com/docs
 
-Create a credential of type "PDF API Hub" and set your API key. The node sends:
+## Credentials setup (n8n)
+
+1. In n8n, go to **Credentials**
+2. Create a credential: **PDF API Hub API**
+3. Paste your API key
+4. Save
+
+This node authenticates by sending:
 
 - Header: `CLIENT-API-KEY: <your-key>`
-- Content-Type: `application/json`
+- Requests are made against: `https://pdfapihub.com/api/v1`
 
-> [!TIP]
-> The declarative/low-code style (used in GitHub Issues) is the recommended approach for building nodes that interact with HTTP APIs. It significantly reduces boilerplate code and handles requests automatically.
+## How outputs work (URL vs File vs Base64)
 
-Browse these examples to understand both approaches, then modify them or create your own.
+Many operations offer an output format/type:
 
-## Node Operations
+- **URL**: the API returns a URL in the JSON response
+- **File**: the node downloads the generated PDF/ZIP and returns it as **binary data** in n8n (`binary.data`)
+- **Base64**: the API returns base64 in the JSON response
 
-The node exposes two operations:
+Tip: If you choose **File**, you can pass the binary to nodes like **Write Binary File**, **Google Drive**, **S3**, **Email**, etc.
 
-- Merge PDF
-  - Endpoint: `POST https://pdfapihub.com/api/v1/pdf/merge`
-  - Parameters:
-    - `URLs` (array of strings) — list of PDF URLs to merge
-    - `Output Format` (url/file) — return URL or download file
-  - Returns: merged PDF URL or file
-- Split PDF
-  - Endpoint: `POST https://pdfapihub.com/api/v1/pdf/split`
-  - Parameters:
-    - `PDF URL` (string) — the PDF to split
-    - `Split Type` (pages/each/chunks) — how to split the PDF
-    - `Pages` (string) — specific pages to extract (e.g., "1-3,5")
-    - `Number of Chunks` (number) — number of chunks to split into
-    - `Output Format` (url/file) — return URLs or download files/ZIP
-  - Returns: split PDF URLs or files
+## Operations
 
-These are excellent resources to understand how to structure your nodes, handle different API patterns, and implement advanced features.
+API reference docs:
+https://pdfapihub.com/docs
 
-## Prerequisites
+### PDF Parse / Extract Text
 
-Before you begin, install the following on your development machine:
+- Endpoint: `POST https://pdfapihub.com/api/v1/pdf/parse`
+- Node: **Resource** → PDF Parse / Extract Text
+- Operation: **Extract Text / Parse PDF**
 
-### Required
+Parameters:
 
-- **[Node.js](https://nodejs.org/)** (v22 or higher) and npm
-  - Linux/Mac/WSL: Install via [nvm](https://github.com/nvm-sh/nvm)
-  - Windows: Follow [Microsoft's NodeJS guide](https://learn.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-on-windows)
-- **[git](https://git-scm.com/downloads)**
+- **PDF URL**: Publicly accessible PDF URL
+- **Parse Mode**: `text` (default), `layout`, `tables`, `full`
+- **Pages**: `all` or a range like `1-3`
 
-### Recommended
+Returns: JSON (extracted text/structure)
 
-- Follow n8n's [development environment setup guide](https://docs.n8n.io/integrations/creating-nodes/build/node-development-environment/)
+### PDF Merge
 
-> [!NOTE]
-> The `@n8n/node-cli` is included as a dev dependency and will be installed automatically when you run `npm install`. The CLI includes n8n for local development, so you don't need to install n8n globally.
+- Endpoint: `POST https://pdfapihub.com/api/v1/pdf/merge`
+- Node: **Resource** → PDF Merge / Split / Compress
+- Operation: **Merge PDF**
 
-## Getting Started with this Starter
+Parameters:
 
-Follow these steps to create your own n8n community node package:
+- **URLs**: list of PDF URLs (in order)
+- **Output Format**: `url` / `file` / `base64`
 
-### 1. Create Your Repository
+Returns:
 
-[Generate a new repository](https://github.com/n8n-io/n8n-nodes-starter/generate) from this template, then clone it:
+- `url` / `base64`: JSON
+- `file`: binary PDF
 
-```bash
-git clone https://github.com/<your-organization>/<your-repo-name>.git
-cd <your-repo-name>
-```
+### PDF Split
 
-### 2. Install Dependencies
+- Endpoint: `POST https://pdfapihub.com/api/v1/pdf/split`
+- Node: **Resource** → PDF Merge / Split / Compress
+- Operation: **Split PDF**
 
-```bash
-npm install
-```
+Parameters:
 
-This installs all required dependencies including the `@n8n/node-cli`.
+- **PDF URL**: URL of the PDF to split
+- **Split Type**:
+  - `pages` (extract specific pages)
+  - `each` (split every page)
+  - `chunks` (split into N chunks)
+- **Pages**: e.g. `1-3,5` (only for `pages`)
+- **Number of Chunks**: (only for `chunks`)
+- **Output Format**: `url` / `file` / `base64`
 
-### Develop and Test Locally
+Returns:
 
-Start n8n with your node loaded:
+- `url` / `base64`: JSON
+- `file`: binary (often a ZIP or PDF, depending on the API response)
 
-```bash
-npm run dev
-```
+### PDF Compress
 
-This command runs `n8n-node dev` which:
+- Endpoint: `POST https://pdfapihub.com/api/v1/compressPdf`
+- Node: **Resource** → PDF Merge / Split / Compress
+- Operation: **Compress PDF**
 
-- Builds your node with watch mode
-- Starts n8n with your node available
-- Automatically rebuilds when you make changes
-- Opens n8n in your browser (usually http://localhost:5678)
+Parameters:
 
-You can now test your node in n8n workflows!
+- **PDF URL**
+- **Compression Level**: `low` / `medium` / `high` / `max`
+- **Output Type**: `url` / `file` / `base64`
+- **Output Filename**: used when output is file
 
-> [!NOTE]
-> Learn more about CLI commands in the [@n8n/node-cli documentation](https://www.npmjs.com/package/@n8n/node-cli).
+Returns:
 
-### Lint Your Code
+- `url` / `base64`: JSON
+- `file`: binary PDF
 
-Check for errors:
+### PDF Lock
 
-```bash
-npm run lint
-```
+- Endpoint: `POST https://pdfapihub.com/api/v1/lockPdf`
+- Node: **Resource** → PDF Security (Lock / Unlock)
+- Operation: **Lock PDF**
 
-Auto-fix issues when possible:
+Parameters:
 
-```bash
-npm run lint:fix
-```
+- **PDF URL**
+- **Password**: password to set
+- **Input Password**: optional (if the input PDF is already encrypted)
+- **Output Type**: `url` / `file` / `base64`
+- **Output Filename**
 
-### Build for Production
+Returns:
 
-When ready to publish:
+- `url` / `base64`: JSON
+- `file`: binary PDF
 
-```bash
-npm run build
-```
+### PDF Unlock
 
-This compiles your TypeScript code to the `dist/` folder.
+- Endpoint: `POST https://pdfapihub.com/api/v1/unlockPdf`
+- Node: **Resource** → PDF Security (Lock / Unlock)
+- Operation: **Unlock PDF**
 
-### Prepare for Publishing
+Parameters:
 
-Before publishing:
+- **PDF URL**
+- **Password**: password to unlock
+- **Output Type**: `url` / `file` / `base64`
+- **Output Filename**
 
-1. **Update documentation**: Replace this README with your node's documentation. Use [README_TEMPLATE.md](README_TEMPLATE.md) as a starting point.
-2. **Update the LICENSE**: Add your details to the [LICENSE](LICENSE.md) file.
-3. **Test thoroughly**: Ensure your node works in different scenarios.
+Returns:
 
-### Publish to npm
+- `url` / `base64`: JSON
+- `file`: binary PDF
 
-Publish your package to make it available to the n8n community:
+### URL to PDF (Website Screenshot)
 
-```bash
-npm publish
-```
+- Endpoint: `POST https://pdfapihub.com/api/v1/generatePdf`
+- Node: **Resource** → Website / HTML to PDF
+- Operation: **URL to PDF**
 
-Learn more about [publishing to npm](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry).
+Parameters:
 
-### Submit for Verification (Optional)
+- **URL**: website URL to capture
+- **Full Page**: capture full page or viewport
+- **Wait Till**: delay in ms before capture
+- **Viewport Width / Height**
+- **Output Format**: `url` / `file`
+- **Output Filename**
+- **Timeout**: request timeout in seconds
 
-Get your node verified for n8n Cloud:
+Returns:
 
-1. Ensure your node meets the [requirements](https://docs.n8n.io/integrations/creating-nodes/deploy/submit-community-nodes/):
-   - Uses MIT license ✅ (included in this starter)
-   - No external package dependencies
-   - Follows n8n's design guidelines
-   - Passes quality and security review
+- `url`: JSON with a PDF URL
+- `file`: binary PDF
 
-2. Submit through the [n8n Creator Portal](https://creators.n8n.io/nodes)
+### HTML to PDF
 
-**Benefits of verification:**
+- Endpoint: `POST https://pdfapihub.com/api/v1/generatePdf`
+- Node: **Resource** → Website / HTML to PDF
+- Operation: **HTML to PDF**
 
-- Available directly in n8n Cloud
-- Discoverable in the n8n nodes panel
-- Verified badge for quality assurance
-- Increased visibility in the n8n community
+Parameters:
 
-## Available Scripts
+- **HTML Content**
+- **CSS Content**
+- **Dynamic Params**: optional key/value replacements for templating
+- **Viewport Width / Height**
+- **Output Format**: `url` / `file`
+- **Output Filename**
+- **Timeout**: request timeout in seconds
 
-This starter includes several npm scripts to streamline development:
+Returns:
 
-| Script                | Description                                                      |
-| --------------------- | ---------------------------------------------------------------- |
-| `npm run dev`         | Start n8n with your node and watch for changes (runs `n8n-node dev`) |
-| `npm run build`       | Compile TypeScript to JavaScript for production (runs `n8n-node build`) |
-| `npm run build:watch` | Build in watch mode (auto-rebuild on changes)                    |
-| `npm run lint`        | Check your code for errors and style issues (runs `n8n-node lint`) |
-| `npm run lint:fix`    | Automatically fix linting issues when possible (runs `n8n-node lint --fix`) |
-| `npm run release`     | Create a new release (runs `n8n-node release`)                   |
+- `url`: JSON with a PDF URL
+- `file`: binary PDF
 
-> [!TIP]
-> These scripts use the [@n8n/node-cli](https://www.npmjs.com/package/@n8n/node-cli) under the hood. You can also run CLI commands directly, e.g., `npx n8n-node dev`.
+## Support
 
-## Troubleshooting
-
-### My node doesn't appear in n8n
-
-1. Make sure you ran `npm install` to install dependencies
-2. Check that your node is listed in `package.json` under `n8n.nodes`
-3. Restart the dev server with `npm run dev`
-4. Check the console for any error messages
-
-### Linting errors
-
-Run `npm run lint:fix` to automatically fix most common issues. For remaining errors, check the [n8n node development guidelines](https://docs.n8n.io/integrations/creating-nodes/).
-
-### TypeScript errors
-
-Make sure you're using Node.js v22 or higher and have run `npm install` to get all type definitions.
-
-## Resources
-
-- **[n8n Node Documentation](https://docs.n8n.io/integrations/creating-nodes/)** - Complete guide to building nodes
-- **[n8n Community Forum](https://community.n8n.io/)** - Get help and share your nodes
-- **[@n8n/node-cli Documentation](https://www.npmjs.com/package/@n8n/node-cli)** - CLI tool reference
-- **[n8n Creator Portal](https://creators.n8n.io/nodes)** - Submit your node for verification
-- **[Submit Community Nodes Guide](https://docs.n8n.io/integrations/creating-nodes/deploy/submit-community-nodes/)** - Verification requirements and process
-
-## Contributing
-
-Have suggestions for improving this starter? [Open an issue](https://github.com/n8n-io/n8n-nodes-starter/issues) or submit a pull request!
+- PDF API Hub documentation: https://pdfapihub.com/docs
+- Website: https://pdfapihub.com
+- Issues/bugs: https://github.com/Pdfapihub/n8n-nodes-pdf-api-hub/issues
 
 ## License
 
-[MIT](https://github.com/n8n-io/n8n-nodes-starter/blob/master/LICENSE.md)
+[MIT](LICENSE.md)
