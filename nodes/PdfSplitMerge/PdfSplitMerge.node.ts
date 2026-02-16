@@ -8,15 +8,15 @@ import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 export class PdfSplitMerge implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'PDF Api Hub | PDF Parse | Extract | Merge | Convert | Lock | Compress | Screenshot(URL) to PDF',
+		displayName: 'PDF API Hub (Merge, Convert & Extract PDFs)',
 		name: 'pdfSplitMerge',
 		icon: { light: 'file:../../icons/pdfhub.light.svg', dark: 'file:../../icons/pdfhub.dark.svg' },
 		group: ['transform'],
 		version: 1,
 		description:
-			'Parse PDFs, merge/split PDFs, generate PDFs from URLs/HTML, and compress/lock/unlock PDFs using PDF API Hub',
+			'Supports PDF parsing, merging, splitting, compressing, locking/unlocking, and HTML/URL to PDF conversion.',
 		defaults: {
-			name: 'PDF Api Hub | PDF Parse | Extract | Merge | Convert | Lock | Compress | Screenshot(URL) to PDF',
+			name: 'PDF API Hub (Merge, Convert & Extract PDFs)',
 		},
 		inputs: [NodeConnectionTypes.Main],
 		outputs: [NodeConnectionTypes.Main],
