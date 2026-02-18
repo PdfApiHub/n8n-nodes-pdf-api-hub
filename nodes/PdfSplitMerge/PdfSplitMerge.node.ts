@@ -524,6 +524,30 @@ export class PdfSplitMerge implements INodeType {
 
 			// Merge parameters
 			{
+				displayName: 'Input Type',
+				name: 'merge_input_type',
+				type: 'options',
+				options: [
+					{
+						name: 'URL',
+						value: 'url',
+						description: 'Provide publicly accessible PDF URLs',
+					},
+					{
+						name: 'File (Binary)',
+						value: 'file',
+						description: 'Upload PDF files from incoming binary data',
+					},
+				],
+				default: 'url',
+				description: 'How to provide the PDFs to merge',
+				displayOptions: {
+					show: {
+						operation: ['mergePdf'],
+					},
+				},
+			},
+			{
 				displayName: 'URLs',
 				name: 'urls',
 				type: 'string',
@@ -536,6 +560,24 @@ export class PdfSplitMerge implements INodeType {
 				displayOptions: {
 					show: {
 						operation: ['mergePdf'],
+						merge_input_type: ['url'],
+					},
+				},
+			},
+			{
+				displayName: 'Binary Property Names',
+				name: 'merge_files_binary_properties',
+				type: 'string',
+				typeOptions: {
+					multipleValues: true,
+				},
+				default: ['data'],
+				description:
+					'One or more binary property names that contain PDFs to merge (for example: "data"). Each entry should point to a PDF binary.',
+				displayOptions: {
+					show: {
+						operation: ['mergePdf'],
+						merge_input_type: ['file'],
 					},
 				},
 			},
@@ -834,9 +876,54 @@ export class PdfSplitMerge implements INodeType {
 						returnData.push({ json: responseData, pairedItem: { item: i } });
 					}
 				} else if (operation === 'mergePdf') {
-					const urls = this.getNodeParameter('urls', i) as string[];
 					const output = this.getNodeParameter('output', i) as string;
-					const body = { urls, output };
+					const mergeInputType = this.getNodeParameter('merge_input_type', i) as string;
+
+					const isFileInput = mergeInputType === 'file';
+					const body = !isFileInput
+						? {
+								urls: this.getNodeParameter('urls', i) as string[],
+								output,
+							}
+						: undefined;
+
+					const formData = isFileInput
+						? (() => {
+							const binaryPropertyNames = this.getNodeParameter(
+								'merge_files_binary_properties',
+								i,
+							) as string[];
+
+							if (!binaryPropertyNames?.length) {
+								throw new NodeOperationError(
+									this.getNode(),
+									'Please provide at least one Binary Property Name',
+									{ itemIndex: i },
+								);
+							}
+
+							const files = binaryPropertyNames.map((propertyName) => {
+								this.helpers.assertBinaryData(i, propertyName);
+								const buffer = this.helpers.getBinaryDataBuffer(i, propertyName);
+								const binary = items[i].binary?.[propertyName];
+								const fileName = binary?.fileName ?? `${propertyName}.pdf`;
+								const contentType = binary?.mimeType ?? 'application/pdf';
+
+								return {
+									value: buffer,
+									options: {
+										filename: fileName,
+										contentType,
+									},
+								};
+							});
+
+							return {
+								files,
+								output,
+							};
+						})()
+						: undefined;
 
 					if (output === 'file') {
 						const responseData = await this.helpers.httpRequestWithAuthentication.call(
@@ -845,8 +932,7 @@ export class PdfSplitMerge implements INodeType {
 							{
 								method: 'POST',
 								url: 'https://pdfapihub.com/api/v1/pdf/merge',
-								body,
-								json: true,
+								...(isFileInput ? { formData } : { body, json: true }),
 								encoding: 'arraybuffer',
 								returnFullResponse: true,
 							},
@@ -865,8 +951,7 @@ export class PdfSplitMerge implements INodeType {
 							{
 								method: 'POST',
 								url: 'https://pdfapihub.com/api/v1/pdf/merge',
-								body,
-								json: true,
+								...(isFileInput ? { formData, json: true } : { body, json: true }),
 							},
 						);
 						returnData.push({ json: responseData, pairedItem: { item: i } });

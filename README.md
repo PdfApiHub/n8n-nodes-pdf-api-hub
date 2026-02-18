@@ -99,7 +99,9 @@ Returns: JSON (extracted text/structure)
 
 Parameters:
 
-- **URLs**: list of PDF URLs (in order)
+- **Input Type**: `url` (URLs) or `file` (Binary upload)
+- **URLs**: list of PDF URLs (in order) (when Input Type = URL)
+- **Binary Property Names**: one or more incoming binary properties containing PDFs (when Input Type = File)
 - **Output Format**: `url` / `file` / `base64`
 
 Returns:
