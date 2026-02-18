@@ -887,43 +887,30 @@ export class PdfSplitMerge implements INodeType {
 							}
 						: undefined;
 
-					const formData = isFileInput
-						? (() => {
-							const binaryPropertyNames = this.getNodeParameter(
-								'merge_files_binary_properties',
-								i,
-							) as string[];
+					let fileInputBody: { files: string[]; output: string } | undefined;
+					if (isFileInput) {
+						const binaryPropertyNames = this.getNodeParameter(
+							'merge_files_binary_properties',
+							i,
+						) as string[];
 
-							if (!binaryPropertyNames?.length) {
-								throw new NodeOperationError(
-									this.getNode(),
-									'Please provide at least one Binary Property Name',
-									{ itemIndex: i },
-								);
-							}
+						if (!binaryPropertyNames?.length) {
+							throw new NodeOperationError(
+								this.getNode(),
+								'Please provide at least one Binary Property Name',
+								{ itemIndex: i },
+							);
+						}
 
-							const files = binaryPropertyNames.map((propertyName) => {
-								this.helpers.assertBinaryData(i, propertyName);
-								const buffer = this.helpers.getBinaryDataBuffer(i, propertyName);
-								const binary = items[i].binary?.[propertyName];
-								const fileName = binary?.fileName ?? `${propertyName}.pdf`;
-								const contentType = binary?.mimeType ?? 'application/pdf';
+						const files: string[] = [];
+						for (const propertyName of binaryPropertyNames) {
+							this.helpers.assertBinaryData(i, propertyName);
+							const buffer = await this.helpers.getBinaryDataBuffer(i, propertyName);
+							files.push(Buffer.from(buffer).toString('base64'));
+						}
 
-								return {
-									value: buffer,
-									options: {
-										filename: fileName,
-										contentType,
-									},
-								};
-							});
-
-							return {
-								files,
-								output,
-							};
-						})()
-						: undefined;
+						fileInputBody = { files, output };
+					}
 
 					if (output === 'file') {
 						const responseData = await this.helpers.httpRequestWithAuthentication.call(
@@ -932,7 +919,9 @@ export class PdfSplitMerge implements INodeType {
 							{
 								method: 'POST',
 								url: 'https://pdfapihub.com/api/v1/pdf/merge',
-								...(isFileInput ? { formData } : { body, json: true }),
+								...(isFileInput
+									? { body: fileInputBody as Record<string, unknown>, json: true }
+									: { body, json: true }),
 								encoding: 'arraybuffer',
 								returnFullResponse: true,
 							},
@@ -951,7 +940,9 @@ export class PdfSplitMerge implements INodeType {
 							{
 								method: 'POST',
 								url: 'https://pdfapihub.com/api/v1/pdf/merge',
-								...(isFileInput ? { formData, json: true } : { body, json: true }),
+								...(isFileInput
+									? { body: fileInputBody as Record<string, unknown>, json: true }
+									: { body, json: true }),
 							},
 						);
 						returnData.push({ json: responseData, pairedItem: { item: i } });
