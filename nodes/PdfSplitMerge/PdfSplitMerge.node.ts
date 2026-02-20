@@ -101,7 +101,7 @@ export class PdfSplitMerge implements INodeType {
 						name: 'Merge PDF',
 						value: 'mergePdf',
 						description: 'Merge multiple PDFs into a single PDF',
-						action: 'Merge multiple PDFs into a single PDF',
+						action: 'Merge multiple pdfs into a single pdf',
 					},
 					{
 						name: 'Split PDF',
@@ -113,7 +113,7 @@ export class PdfSplitMerge implements INodeType {
 						name: 'Compress PDF',
 						value: 'compressPdf',
 						description: 'Compress a PDF to reduce file size',
-						action: 'Reduce Size of PDF file',
+						action: 'Reduce size of pdf file',
 					},
 				],
 				default: 'mergePdf',
@@ -134,7 +134,7 @@ export class PdfSplitMerge implements INodeType {
 						name: 'Lock PDF',
 						value: 'lockPdf',
 						description: 'Add password protection to a PDF',
-						action: 'Password-protect a PDF',
+						action: 'Password protect a pdf file',
 					},
 					{
 						name: 'Unlock PDF',
