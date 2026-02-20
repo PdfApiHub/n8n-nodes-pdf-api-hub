@@ -887,14 +887,23 @@ export class PdfSplitMerge implements INodeType {
 							}
 						: undefined;
 
-					let fileInputBody: { files: string[]; output: string } | undefined;
+					let multipartBody: Buffer | undefined;
+					let multipartBoundary: string | undefined;
 					if (isFileInput) {
-						const binaryPropertyNames = this.getNodeParameter(
+						const binaryPropertyNamesParam = this.getNodeParameter(
 							'merge_files_binary_properties',
 							i,
-						) as string[];
+						) as unknown;
 
-						if (!binaryPropertyNames?.length) {
+						const binaryPropertyNames = (
+							Array.isArray(binaryPropertyNamesParam)
+								? binaryPropertyNamesParam
+								: [binaryPropertyNamesParam]
+						)
+							.map((v) => String(v ?? '').trim())
+							.filter((v) => v !== '');
+
+						if (!binaryPropertyNames.length) {
 							throw new NodeOperationError(
 								this.getNode(),
 								'Please provide at least one Binary Property Name',
@@ -902,14 +911,36 @@ export class PdfSplitMerge implements INodeType {
 							);
 						}
 
-						const files: string[] = [];
+						multipartBoundary = `----n8nFormBoundary${Math.random().toString(36).slice(2)}`;
+						const parts: Buffer[] = [];
+
 						for (const propertyName of binaryPropertyNames) {
-							this.helpers.assertBinaryData(i, propertyName);
-							const buffer = await this.helpers.getBinaryDataBuffer(i, propertyName);
-							files.push(Buffer.from(buffer).toString('base64'));
+							const binaryData = this.helpers.assertBinaryData(i, propertyName);
+							const binaryDataBuffer = await this.helpers.getBinaryDataBuffer(i, propertyName);
+							const fileName = binaryData.fileName ?? 'file.pdf';
+							const contentType = binaryData.mimeType ?? 'application/pdf';
+
+							parts.push(
+								Buffer.from(
+									`--${multipartBoundary}\r\n` +
+										`Content-Disposition: form-data; name="files"; filename="${fileName}"\r\n` +
+										`Content-Type: ${contentType}\r\n\r\n`,
+								),
+							);
+							parts.push(Buffer.from(binaryDataBuffer));
+							parts.push(Buffer.from('\r\n'));
 						}
 
-						fileInputBody = { files, output };
+						parts.push(
+							Buffer.from(
+								`--${multipartBoundary}\r\n` +
+									'Content-Disposition: form-data; name="output"\r\n\r\n' +
+									`${output}\r\n`,
+							),
+						);
+						parts.push(Buffer.from(`--${multipartBoundary}--\r\n`));
+
+						multipartBody = Buffer.concat(parts);
 					}
 
 					if (output === 'file') {
@@ -920,7 +951,12 @@ export class PdfSplitMerge implements INodeType {
 								method: 'POST',
 								url: 'https://pdfapihub.com/api/v1/pdf/merge',
 								...(isFileInput
-									? { body: fileInputBody as Record<string, unknown>, json: true }
+									? {
+											body: multipartBody as Buffer,
+											headers: {
+												'Content-Type': `multipart/form-data; boundary=${multipartBoundary}`,
+											},
+										}
 									: { body, json: true }),
 								encoding: 'arraybuffer',
 								returnFullResponse: true,
@@ -941,11 +977,32 @@ export class PdfSplitMerge implements INodeType {
 								method: 'POST',
 								url: 'https://pdfapihub.com/api/v1/pdf/merge',
 								...(isFileInput
-									? { body: fileInputBody as Record<string, unknown>, json: true }
+									? {
+											body: multipartBody as Buffer,
+											headers: {
+												'Content-Type': `multipart/form-data; boundary=${multipartBoundary}`,
+											},
+										}
 									: { body, json: true }),
+								returnFullResponse: true,
 							},
 						);
-						returnData.push({ json: responseData, pairedItem: { item: i } });
+
+						const responseBody = (responseData as { body?: unknown }).body;
+						if (typeof responseBody === 'string') {
+							try {
+								returnData.push({ json: JSON.parse(responseBody), pairedItem: { item: i } });
+							} catch {
+								returnData.push({ json: { raw: responseBody }, pairedItem: { item: i } });
+							}
+						} else if (Buffer.isBuffer(responseBody)) {
+							const text = responseBody.toString('utf8');
+							try {
+								returnData.push({ json: JSON.parse(text), pairedItem: { item: i } });
+							} catch {
+								returnData.push({ json: { raw: text }, pairedItem: { item: i } });
+							}
+						}
 					}
 				} else if (operation === 'splitPdf') {
 					const pdfUrl = this.getNodeParameter('url', i) as string;
