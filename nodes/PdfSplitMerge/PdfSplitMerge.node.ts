@@ -35,58 +35,58 @@ export class PdfSplitMerge implements INodeType {
 				type: 'options',
 				noDataExpression: true,
 				options: [
-						{
-							name: 'Website / HTML to PDF',
-							value: 'pdfCreation',
-							description: 'Capture a website screenshot to PDF or render HTML/CSS to PDF',
-						},
-						{
-							name: 'Website / HTML to Image',
-							value: 'imageGeneration',
-							description: 'Capture a website screenshot to image or render HTML/CSS to image',
-						},
 					{
-							name: 'PDF Parse / Extract Text',
-						value: 'pdfParsing',
-							description: 'Extract text or structured data from PDFs',
+						name: 'Image to PDF',
+						value: 'imageToPdf',
+						description: 'Convert images (PNG, WebP, JPG) to PDF',
 					},
-						{
-							name: 'OCR to Searchable Text (PDF/Image)',
-							value: 'ocrParsing',
-							description: 'Extract searchable text from scanned PDFs/images',
-						},
-						{
-							name: 'PDF Merge / Split / Compress',
-							value: 'pdfManipulation',
-							description: 'Merge, split, or compress PDF documents',
-						},
-						{
-							name: 'PDF Security (Lock / Unlock)',
-							value: 'pdfSecurity',
-							description: 'Lock and unlock password-protected PDFs',
-						},
-						{
-							name: 'Image to PDF',
-							value: 'imageToPdf',
-							description: 'Convert images (PNG, WebP, JPG) to PDF',
-						},
-						{
-							name: 'PDF to Image',
-							value: 'pdfToImage',
-							description: 'Convert PDF pages to images (PNG, WebP)',
-						},
-						{
-							name: 'URL to HTML',
-							value: 'urlToHtml',
-							description: 'Fetch HTML content from a URL',
-						},
-						{
-							name: 'Watermark PDF',
-							value: 'watermark',
-							description: 'Add watermark to PDF or image',
-						},
+					{
+						name: 'OCR to Searchable Text (PDF/Image)',
+						value: 'ocrParsing',
+						description: 'Extract searchable text from scanned PDFs/images',
+					},
+					{
+						name: 'PDF Merge / Split / Compress',
+						value: 'pdfManipulation',
+						description: 'Merge, split, or compress PDF documents',
+					},
+					{
+						name: 'PDF Parse / Extract Text',
+						value: 'pdfParsing',
+						description: 'Extract text or structured data from PDFs',
+					},
+					{
+						name: 'PDF Security (Lock / Unlock)',
+						value: 'pdfSecurity',
+						description: 'Lock and unlock password-protected PDFs',
+					},
+					{
+						name: 'PDF to Image',
+						value: 'pdfToImage',
+						description: 'Convert PDF pages to images (PNG, WebP)',
+					},
+					{
+						name: 'URL to HTML',
+						value: 'urlToHtml',
+						description: 'Fetch HTML content from a URL',
+					},
+					{
+						name: 'Watermark PDF',
+						value: 'watermark',
+						description: 'Add watermark to PDF or image',
+					},
+					{
+						name: 'Website / HTML to Image',
+						value: 'imageGeneration',
+						description: 'Capture a website screenshot to image or render HTML/CSS to image',
+					},
+					{
+						name: 'Website / HTML to PDF',
+						value: 'pdfCreation',
+						description: 'Capture a website screenshot to PDF or render HTML/CSS to PDF',
+					},
 				],
-					default: 'pdfParsing',
+				default: 'pdfParsing',
 			},
 			// PDF Creation Operations
 			{
@@ -158,13 +158,13 @@ export class PdfSplitMerge implements INodeType {
 						name: 'PDF OCR Parse',
 						value: 'pdfOcrParse',
 						description: 'Extract text from scanned PDF using OCR',
-						action: 'OCR parse a PDF document',
+						action: 'Ocr parse a pdf document',
 					},
 					{
 						name: 'Image OCR Parse',
 						value: 'imageOcrParse',
 						description: 'Extract text from image using OCR',
-						action: 'OCR parse an image',
+						action: 'Ocr parse an image',
 					},
 				],
 				default: 'pdfOcrParse',
@@ -191,7 +191,7 @@ export class PdfSplitMerge implements INodeType {
 						name: 'WebP to PDF',
 						value: 'webpToPdf',
 						description: 'Convert WebP image(s) to PDF',
-						action: 'Convert WebP images to PDF',
+						action: 'Convert web p images to pdf',
 					},
 					{
 						name: 'JPG to PDF',
@@ -224,7 +224,7 @@ export class PdfSplitMerge implements INodeType {
 						name: 'PDF to WebP',
 						value: 'pdfToWebp',
 						description: 'Convert PDF pages to WebP images',
-						action: 'Convert PDF to WebP images',
+						action: 'Convert pdf to web p images',
 					},
 					{
 						name: 'PDF to JPG',
@@ -1470,7 +1470,7 @@ export class PdfSplitMerge implements INodeType {
 				},
 			},
 			{
-				displayName: 'Timeout (ms)',
+				displayName: 'Timeout (Ms)',
 				name: 'html_timeout',
 				type: 'number',
 				default: 30000,
@@ -1494,7 +1494,7 @@ export class PdfSplitMerge implements INodeType {
 				},
 			},
 			{
-				displayName: 'Additional Wait (ms)',
+				displayName: 'Additional Wait (Ms)',
 				name: 'html_wait_for_timeout',
 				type: 'number',
 				default: 0,
@@ -1510,7 +1510,6 @@ export class PdfSplitMerge implements INodeType {
 				name: 'html_viewport_width',
 				type: 'number',
 				default: 1920,
-				description: 'Viewport width',
 				displayOptions: {
 					show: {
 						operation: ['fetchHtml'],
@@ -1522,7 +1521,6 @@ export class PdfSplitMerge implements INodeType {
 				name: 'html_viewport_height',
 				type: 'number',
 				default: 1080,
-				description: 'Viewport height',
 				displayOptions: {
 					show: {
 						operation: ['fetchHtml'],
