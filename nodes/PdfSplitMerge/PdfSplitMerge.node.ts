@@ -157,14 +157,14 @@ export class PdfSplitMerge implements INodeType {
 					{
 						name: 'PDF OCR Parse',
 						value: 'pdfOcrParse',
-						description: 'Extract text from scanned PDF using OCR',
-						action: 'Ocr parse a pdf document',
+						description: 'Parse text from PDFs, including scanned pages',
+						action: 'Parse text from scanned PDF images',
 					},
 					{
 						name: 'Image OCR Parse',
 						value: 'imageOcrParse',
 						description: 'Extract text from image using OCR',
-						action: 'Ocr parse an image',
+						action: 'Parse text from images',
 					},
 				],
 				default: 'pdfOcrParse',
@@ -191,7 +191,7 @@ export class PdfSplitMerge implements INodeType {
 						name: 'WebP to PDF',
 						value: 'webpToPdf',
 						description: 'Convert WebP image(s) to PDF',
-						action: 'Convert web p images to pdf',
+						action: 'Convert webp images to PDF',
 					},
 					{
 						name: 'JPG to PDF',
@@ -375,14 +375,45 @@ export class PdfSplitMerge implements INodeType {
 
 			// Properties for Compress PDF
 			{
+				displayName: 'Input Type',
+				name: 'compress_input_type',
+				type: 'options',
+				options: [
+					{ name: 'URL', value: 'url' },
+					{ name: 'File (Binary)', value: 'file' },
+				],
+				default: 'url',
+				description: 'How to provide the PDF to compress',
+				displayOptions: {
+					show: {
+						operation: ['compressPdf'],
+					},
+				},
+			},
+			{
 				displayName: 'PDF URL',
 				name: 'compress_url',
 				type: 'string',
 				default: '',
 				description: 'URL of the PDF to compress',
+				placeholder: 'https://pdfapihub.com/sample.pdf',
 				displayOptions: {
 					show: {
 						operation: ['compressPdf'],
+						compress_input_type: ['url'],
+					},
+				},
+			},
+			{
+				displayName: 'Binary Property Name',
+				name: 'compress_file_binary_property',
+				type: 'string',
+				default: 'data',
+				description: 'Binary property containing the PDF file',
+				displayOptions: {
+					show: {
+						operation: ['compressPdf'],
+						compress_input_type: ['file'],
 					},
 				},
 			},
@@ -436,14 +467,45 @@ export class PdfSplitMerge implements INodeType {
 
 			// Properties for Lock PDF
 			{
+				displayName: 'Input Type',
+				name: 'lock_input_type',
+				type: 'options',
+				options: [
+					{ name: 'URL', value: 'url' },
+					{ name: 'File (Binary)', value: 'file' },
+				],
+				default: 'url',
+				description: 'How to provide the PDF to lock',
+				displayOptions: {
+					show: {
+						operation: ['lockPdf'],
+					},
+				},
+			},
+			{
 				displayName: 'PDF URL',
 				name: 'lock_url',
 				type: 'string',
 				default: '',
 				description: 'URL of the PDF to lock',
+				placeholder: 'https://pdfapihub.com/sample.pdf',
 				displayOptions: {
 					show: {
 						operation: ['lockPdf'],
+						lock_input_type: ['url'],
+					},
+				},
+			},
+			{
+				displayName: 'Binary Property Name',
+				name: 'lock_file_binary_property',
+				type: 'string',
+				default: 'data',
+				description: 'Binary property containing the PDF file',
+				displayOptions: {
+					show: {
+						operation: ['lockPdf'],
+						lock_input_type: ['file'],
 					},
 				},
 			},
@@ -509,14 +571,45 @@ export class PdfSplitMerge implements INodeType {
 
 			// Properties for Unlock PDF
 			{
+				displayName: 'Input Type',
+				name: 'unlock_input_type',
+				type: 'options',
+				options: [
+					{ name: 'URL', value: 'url' },
+					{ name: 'File (Binary)', value: 'file' },
+				],
+				default: 'url',
+				description: 'How to provide the PDF to unlock',
+				displayOptions: {
+					show: {
+						operation: ['unlockPdf'],
+					},
+				},
+			},
+			{
 				displayName: 'PDF URL',
 				name: 'unlock_url',
 				type: 'string',
 				default: '',
 				description: 'URL of the password-protected PDF to unlock',
+				placeholder: 'https://pdfapihub.com/sample.pdf',
 				displayOptions: {
 					show: {
 						operation: ['unlockPdf'],
+						unlock_input_type: ['url'],
+					},
+				},
+			},
+			{
+				displayName: 'Binary Property Name',
+				name: 'unlock_file_binary_property',
+				type: 'string',
+				default: 'data',
+				description: 'Binary property containing the PDF file',
+				displayOptions: {
+					show: {
+						operation: ['unlockPdf'],
+						unlock_input_type: ['file'],
 					},
 				},
 			},
@@ -806,14 +899,45 @@ export class PdfSplitMerge implements INodeType {
 
 			// Split parameters
 			{
+				displayName: 'Input Type',
+				name: 'split_input_type',
+				type: 'options',
+				options: [
+					{ name: 'URL', value: 'url' },
+					{ name: 'File (Binary)', value: 'file' },
+				],
+				default: 'url',
+				description: 'How to provide the PDF to split',
+				displayOptions: {
+					show: {
+						operation: ['splitPdf'],
+					},
+				},
+			},
+			{
 				displayName: 'PDF URL',
 				name: 'url',
 				type: 'string',
 				default: '',
 				description: 'The PDF URL to split',
+				placeholder: 'https://pdfapihub.com/sample.pdf',
 				displayOptions: {
 					show: {
 						operation: ['splitPdf'],
+						split_input_type: ['url'],
+					},
+				},
+			},
+			{
+				displayName: 'Binary Property Name',
+				name: 'split_file_binary_property',
+				type: 'string',
+				default: 'data',
+				description: 'Binary property containing the PDF file',
+				displayOptions: {
+					show: {
+						operation: ['splitPdf'],
+						split_input_type: ['file'],
 					},
 				},
 			},
@@ -905,14 +1029,45 @@ export class PdfSplitMerge implements INodeType {
 
 			// Properties for Parse PDF
 			{
+				displayName: 'Input Type',
+				name: 'parse_input_type',
+				type: 'options',
+				options: [
+					{ name: 'URL', value: 'url' },
+					{ name: 'File (Binary)', value: 'file' },
+				],
+				default: 'url',
+				description: 'How to provide the PDF to parse',
+				displayOptions: {
+					show: {
+						operation: ['parsePdf'],
+					},
+				},
+			},
+			{
 				displayName: 'PDF URL',
 				name: 'parse_url',
 				type: 'string',
 				default: '',
 				description: 'URL of the PDF to parse',
+				placeholder: 'https://pdfapihub.com/sample.pdf',
 				displayOptions: {
 					show: {
 						operation: ['parsePdf'],
+						parse_input_type: ['url'],
+					},
+				},
+			},
+			{
+				displayName: 'Binary Property Name',
+				name: 'parse_file_binary_property',
+				type: 'string',
+				default: 'data',
+				description: 'Binary property containing the PDF file',
+				displayOptions: {
+					show: {
+						operation: ['parsePdf'],
+						parse_input_type: ['file'],
 					},
 				},
 			},
@@ -1174,7 +1329,7 @@ export class PdfSplitMerge implements INodeType {
 				displayName: 'PDF URL',
 				name: 'ocr_pdf_url',
 				type: 'string',
-				default: '',
+				default: 'https://pdfapihub.com/sample-pdfinvoice-with-image.pdf',
 				description: 'URL of the PDF to OCR parse',
 				displayOptions: {
 					show: {
@@ -1186,8 +1341,8 @@ export class PdfSplitMerge implements INodeType {
 				displayName: 'Pages',
 				name: 'ocr_pages',
 				type: 'string',
-				default: 'all',
-				description: 'Page selection: "all", a range like "1-3", or comma list like "1,3,5-7"',
+				default: '1',
+				description: 'Page number or "all" (maximum 8 pages)',
 				displayOptions: {
 					show: {
 						operation: ['pdfOcrParse'],
@@ -1195,14 +1350,31 @@ export class PdfSplitMerge implements INodeType {
 				},
 			},
 			{
+				displayName: 'Image Input Type',
+				name: 'ocr_image_input_type',
+				type: 'options',
+				options: [
+					{ name: 'URL', value: 'url' },
+					{ name: 'Base64', value: 'base64' },
+				],
+				default: 'url',
+				description: 'How to provide the image',
+				displayOptions: {
+					show: {
+						operation: ['imageOcrParse'],
+					},
+				},
+			},
+			{
 				displayName: 'Image URL',
 				name: 'ocr_image_url',
 				type: 'string',
-				default: '',
+				default: 'https://pdfapihub.com/sample-invoicepage.png',
 				description: 'URL of the image to OCR parse',
 				displayOptions: {
 					show: {
 						operation: ['imageOcrParse'],
+						ocr_image_input_type: ['url'],
 					},
 				},
 			},
@@ -1215,6 +1387,7 @@ export class PdfSplitMerge implements INodeType {
 				displayOptions: {
 					show: {
 						operation: ['imageOcrParse'],
+						ocr_image_input_type: ['base64'],
 					},
 				},
 			},
@@ -1289,17 +1462,51 @@ export class PdfSplitMerge implements INodeType {
 			},
 			{
 				displayName: 'Image URLs',
-				name: 'img2pdf_urls',
+				name: 'img2pdf_urls_png',
 				type: 'string',
 				typeOptions: {
 					multipleValues: true,
 				},
 				default: [],
 				description: 'Array of image URLs to convert (max 100)',
-				placeholder: 'https://example.com/image.png',
+				placeholder: 'https://pdfapihub.com/sample.png',
 				displayOptions: {
 					show: {
-						operation: ['pngToPdf', 'webpToPdf', 'jpgToPdf'],
+						operation: ['pngToPdf'],
+						img2pdf_input_type: ['url'],
+					},
+				},
+			},
+			{
+				displayName: 'Image URLs',
+				name: 'img2pdf_urls_webp',
+				type: 'string',
+				typeOptions: {
+					multipleValues: true,
+				},
+				default: [],
+				description: 'Array of image URLs to convert (max 100)',
+				placeholder: 'https://pdfapihub.com/sample.webp',
+				displayOptions: {
+					show: {
+						operation: ['webpToPdf'],
+						img2pdf_input_type: ['url'],
+					},
+				},
+			},
+			{
+				displayName: 'Image URLs',
+				name: 'img2pdf_urls_jpg',
+				type: 'string',
+				typeOptions: {
+					multipleValues: true,
+				},
+				default: [],
+				description: 'Array of image URLs to convert (max 100)',
+				placeholder: 'https://pdfapihub.com/sample.jpg',
+				displayOptions: {
+					show: {
+						operation: ['jpgToPdf'],
 						img2pdf_input_type: ['url'],
 					},
 				},
@@ -1371,14 +1578,45 @@ export class PdfSplitMerge implements INodeType {
 			// PDF TO IMAGE PROPERTIES
 			// =====================================================
 			{
+				displayName: 'Input Type',
+				name: 'pdf2img_input_type',
+				type: 'options',
+				options: [
+					{ name: 'URL', value: 'url' },
+					{ name: 'File (Binary)', value: 'file' },
+				],
+				default: 'url',
+				description: 'How to provide the PDF to convert',
+				displayOptions: {
+					show: {
+						operation: ['pdfToPng', 'pdfToWebp', 'pdfToJpg'],
+					},
+				},
+			},
+			{
 				displayName: 'PDF URL',
 				name: 'pdf2img_url',
 				type: 'string',
 				default: '',
 				description: 'URL of the PDF to convert',
+				placeholder: 'https://pdfapihub.com/sample.pdf',
 				displayOptions: {
 					show: {
 						operation: ['pdfToPng', 'pdfToWebp', 'pdfToJpg'],
+						pdf2img_input_type: ['url'],
+					},
+				},
+			},
+			{
+				displayName: 'Binary Property Name',
+				name: 'pdf2img_file_binary_property',
+				type: 'string',
+				default: 'data',
+				description: 'Binary property containing the PDF file',
+				displayOptions: {
+					show: {
+						operation: ['pdfToPng', 'pdfToWebp', 'pdfToJpg'],
+						pdf2img_input_type: ['file'],
 					},
 				},
 			},
@@ -1444,7 +1682,7 @@ export class PdfSplitMerge implements INodeType {
 				displayName: 'URL',
 				name: 'html_fetch_url',
 				type: 'string',
-				default: '',
+				default: 'http://example.com/',
 				description: 'URL to fetch HTML from',
 				displayOptions: {
 					show: {
@@ -1712,6 +1950,61 @@ export class PdfSplitMerge implements INodeType {
 			});
 		};
 
+		const normalizeUrl = (value: string): string => {
+			const trimmed = value.trim();
+			if (!trimmed) {
+				return trimmed;
+			}
+
+			if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+				return trimmed;
+			}
+
+			return `https://${trimmed}`;
+		};
+
+		const createSingleFileMultipart = async (
+			itemIndex: number,
+			binaryPropertyName: string,
+			fields: Record<string, string | number | boolean>,
+		) => {
+			const boundary = `----n8nFormBoundary${Math.random().toString(36).slice(2)}`;
+			const binaryData = this.helpers.assertBinaryData(itemIndex, binaryPropertyName);
+			const binaryDataBuffer = await this.helpers.getBinaryDataBuffer(itemIndex, binaryPropertyName);
+			const fileName = binaryData.fileName ?? 'file.pdf';
+			const contentType = binaryData.mimeType ?? 'application/pdf';
+
+			const parts: Buffer[] = [];
+			parts.push(
+				Buffer.from(
+					`--${boundary}\r\n` +
+						`Content-Disposition: form-data; name="file"; filename="${fileName}"\r\n` +
+						`Content-Type: ${contentType}\r\n\r\n`,
+				),
+			);
+			parts.push(Buffer.from(binaryDataBuffer));
+			parts.push(Buffer.from('\r\n'));
+
+			for (const [key, value] of Object.entries(fields)) {
+				parts.push(
+					Buffer.from(
+						`--${boundary}\r\n` +
+							`Content-Disposition: form-data; name="${key}"\r\n\r\n` +
+							`${String(value)}\r\n`,
+					),
+				);
+			}
+
+			parts.push(Buffer.from(`--${boundary}--\r\n`));
+
+			return {
+				body: Buffer.concat(parts),
+				headers: {
+					'Content-Type': `multipart/form-data; boundary=${boundary}`,
+				},
+			};
+		};
+
 		for (let i = 0; i < items.length; i++) {
 			try {
 				const operation = this.getNodeParameter('operation', i) as string;
@@ -1744,7 +2037,7 @@ export class PdfSplitMerge implements INodeType {
 							}
 						}
 					} else {
-						body.url = this.getNodeParameter('url_to_pdf', i) as string;
+						body.url = normalizeUrl(this.getNodeParameter('url_to_pdf', i) as string);
 						body.full_page = this.getNodeParameter('full_page', i) as boolean;
 						body.wait_till = this.getNodeParameter('wait_till', i) as number;
 						body.viewPortWidth = this.getNodeParameter('viewPortWidth', i) as number;
@@ -1794,7 +2087,7 @@ export class PdfSplitMerge implements INodeType {
 					const isFileInput = mergeInputType === 'file';
 					const body = !isFileInput
 						? {
-								urls: this.getNodeParameter('urls', i) as string[],
+								urls: (this.getNodeParameter('urls', i) as string[]).map(normalizeUrl),
 								output,
 							}
 						: undefined;
@@ -1922,11 +2215,15 @@ export class PdfSplitMerge implements INodeType {
 						}
 					}
 				} else if (operation === 'splitPdf') {
-					const pdfUrl = this.getNodeParameter('url', i) as string;
+					const splitInputType = this.getNodeParameter('split_input_type', i) as string;
+					const pdfUrl = this.getNodeParameter('url', i, '') as string;
 					const splitType = this.getNodeParameter('splitType', i) as string;
 					const output = this.getNodeParameter('output', i) as string;
 
-					const body: Record<string, unknown> = { url: pdfUrl, output };
+					const body: Record<string, unknown> = { output };
+					if (splitInputType === 'url') {
+						body.url = normalizeUrl(pdfUrl);
+					}
 
 					if (splitType === 'pages') {
 						const pages = this.getNodeParameter('pages', i) as string;
@@ -1939,14 +2236,21 @@ export class PdfSplitMerge implements INodeType {
 					}
 
 					if (output === 'file') {
+						const requestOptions =
+							splitInputType === 'file'
+								? await createSingleFileMultipart(
+										i,
+										this.getNodeParameter('split_file_binary_property', i) as string,
+										body as Record<string, string | number | boolean>,
+								  )
+								: { body, json: true };
 						const responseData = await this.helpers.httpRequestWithAuthentication.call(
 							this,
 							'pdfapihubApi',
 							{
 								method: 'POST',
 								url: 'https://pdfapihub.com/api/v1/pdf/split',
-								body,
-								json: true,
+								...requestOptions,
 								encoding: 'arraybuffer',
 								returnFullResponse: true,
 							},
@@ -1959,40 +2263,71 @@ export class PdfSplitMerge implements INodeType {
 							'application/octet-stream',
 						);
 					} else {
+						const requestOptions =
+							splitInputType === 'file'
+								? await createSingleFileMultipart(
+										i,
+										this.getNodeParameter('split_file_binary_property', i) as string,
+										body as Record<string, string | number | boolean>,
+								  )
+								: { body, json: true };
 						const responseData = await this.helpers.httpRequestWithAuthentication.call(
 							this,
 							'pdfapihubApi',
 							{
 								method: 'POST',
 								url: 'https://pdfapihub.com/api/v1/pdf/split',
-								body,
-								json: true,
+								...requestOptions,
+								returnFullResponse: splitInputType === 'file',
 							},
 						);
-						returnData.push({ json: responseData, pairedItem: { item: i } });
+						if (splitInputType === 'file') {
+							const responseBody = (responseData as { body?: unknown }).body;
+							if (typeof responseBody === 'string') {
+								try {
+									returnData.push({ json: JSON.parse(responseBody), pairedItem: { item: i } });
+								} catch {
+									returnData.push({ json: { raw: responseBody }, pairedItem: { item: i } });
+								}
+							} else {
+								returnData.push({ json: (responseBody ?? {}) as IDataObject, pairedItem: { item: i } });
+							}
+						} else {
+							returnData.push({ json: responseData, pairedItem: { item: i } });
+						}
 					}
 				} else if (operation === 'compressPdf') {
-					const pdfUrl = this.getNodeParameter('compress_url', i) as string;
+					const compressInputType = this.getNodeParameter('compress_input_type', i) as string;
+					const pdfUrl = this.getNodeParameter('compress_url', i, '') as string;
 					const compression = this.getNodeParameter('compression', i) as string;
 					const outputType = this.getNodeParameter('compress_output', i) as string;
 					const outputName = this.getNodeParameter('compress_output_name', i) as string;
 
-					const body = {
-						url: pdfUrl,
+					const body: Record<string, unknown> = {
 						compression,
 						output: outputType,
 						output_name: outputName,
 					};
+					if (compressInputType === 'url') {
+						body.url = normalizeUrl(pdfUrl);
+					}
 
 					if (outputType === 'file') {
+						const requestOptions =
+							compressInputType === 'file'
+								? await createSingleFileMultipart(
+										i,
+										this.getNodeParameter('compress_file_binary_property', i) as string,
+										body as Record<string, string | number | boolean>,
+								  )
+								: { body, json: true };
 						const responseData = await this.helpers.httpRequestWithAuthentication.call(
 							this,
 							'pdfapihubApi',
 							{
 								method: 'POST',
 								url: 'https://pdfapihub.com/api/v1/compressPdf',
-								body,
-								json: true,
+								...requestOptions,
 								encoding: 'arraybuffer',
 								returnFullResponse: true,
 							},
@@ -2005,45 +2340,68 @@ export class PdfSplitMerge implements INodeType {
 							'application/pdf',
 						);
 					} else {
+						const requestOptions =
+							compressInputType === 'file'
+								? await createSingleFileMultipart(
+										i,
+										this.getNodeParameter('compress_file_binary_property', i) as string,
+										body as Record<string, string | number | boolean>,
+								  )
+								: { body, json: true };
 						const responseData = await this.helpers.httpRequestWithAuthentication.call(
 							this,
 							'pdfapihubApi',
 							{
 								method: 'POST',
 								url: 'https://pdfapihub.com/api/v1/compressPdf',
-								body,
-								json: true,
+								...requestOptions,
+								returnFullResponse: compressInputType === 'file',
 							},
 						);
-						returnData.push({ json: responseData, pairedItem: { item: i } });
+						if (compressInputType === 'file') {
+							const responseBody = (responseData as { body?: unknown }).body;
+							returnData.push({ json: (responseBody ?? {}) as IDataObject, pairedItem: { item: i } });
+						} else {
+							returnData.push({ json: responseData, pairedItem: { item: i } });
+						}
 					}
 				} else if (operation === 'lockPdf') {
-					const pdfUrl = this.getNodeParameter('lock_url', i) as string;
+					const lockInputType = this.getNodeParameter('lock_input_type', i) as string;
+					const pdfUrl = this.getNodeParameter('lock_url', i, '') as string;
 					const password = this.getNodeParameter('lock_password', i) as string;
 					const inputPassword = this.getNodeParameter('lock_input_password', i, '') as string;
 					const outputType = this.getNodeParameter('lock_output', i) as string;
 					const outputName = this.getNodeParameter('lock_output_name', i) as string;
 
 					const body: Record<string, unknown> = {
-						url: pdfUrl,
 						password,
 						output: outputType,
 						output_name: outputName,
 					};
+					if (lockInputType === 'url') {
+						body.url = normalizeUrl(pdfUrl);
+					}
 
 					if (inputPassword) {
 						body.input_password = inputPassword;
 					}
 
 					if (outputType === 'file') {
+						const requestOptions =
+							lockInputType === 'file'
+								? await createSingleFileMultipart(
+										i,
+										this.getNodeParameter('lock_file_binary_property', i) as string,
+										body as Record<string, string | number | boolean>,
+								  )
+								: { body, json: true };
 						const responseData = await this.helpers.httpRequestWithAuthentication.call(
 							this,
 							'pdfapihubApi',
 							{
 								method: 'POST',
 								url: 'https://pdfapihub.com/api/v1/lockPdf',
-								body,
-								json: true,
+								...requestOptions,
 								encoding: 'arraybuffer',
 								returnFullResponse: true,
 							},
@@ -2056,40 +2414,63 @@ export class PdfSplitMerge implements INodeType {
 							'application/pdf',
 						);
 					} else {
+						const requestOptions =
+							lockInputType === 'file'
+								? await createSingleFileMultipart(
+										i,
+										this.getNodeParameter('lock_file_binary_property', i) as string,
+										body as Record<string, string | number | boolean>,
+								  )
+								: { body, json: true };
 						const responseData = await this.helpers.httpRequestWithAuthentication.call(
 							this,
 							'pdfapihubApi',
 							{
 								method: 'POST',
 								url: 'https://pdfapihub.com/api/v1/lockPdf',
-								body,
-								json: true,
+								...requestOptions,
+								returnFullResponse: lockInputType === 'file',
 							},
 						);
-						returnData.push({ json: responseData, pairedItem: { item: i } });
+						if (lockInputType === 'file') {
+							const responseBody = (responseData as { body?: unknown }).body;
+							returnData.push({ json: (responseBody ?? {}) as IDataObject, pairedItem: { item: i } });
+						} else {
+							returnData.push({ json: responseData, pairedItem: { item: i } });
+						}
 					}
 				} else if (operation === 'unlockPdf') {
-					const pdfUrl = this.getNodeParameter('unlock_url', i) as string;
+					const unlockInputType = this.getNodeParameter('unlock_input_type', i) as string;
+					const pdfUrl = this.getNodeParameter('unlock_url', i, '') as string;
 					const password = this.getNodeParameter('unlock_password', i) as string;
 					const outputType = this.getNodeParameter('unlock_output', i) as string;
 					const outputName = this.getNodeParameter('unlock_output_name', i) as string;
 
-					const body = {
-						url: pdfUrl,
+					const body: Record<string, unknown> = {
 						password,
 						output: outputType,
 						output_name: outputName,
 					};
+					if (unlockInputType === 'url') {
+						body.url = normalizeUrl(pdfUrl);
+					}
 
 					if (outputType === 'file') {
+						const requestOptions =
+							unlockInputType === 'file'
+								? await createSingleFileMultipart(
+										i,
+										this.getNodeParameter('unlock_file_binary_property', i) as string,
+										body as Record<string, string | number | boolean>,
+								  )
+								: { body, json: true };
 						const responseData = await this.helpers.httpRequestWithAuthentication.call(
 							this,
 							'pdfapihubApi',
 							{
 								method: 'POST',
 								url: 'https://pdfapihub.com/api/v1/unlockPdf',
-								body,
-								json: true,
+								...requestOptions,
 								encoding: 'arraybuffer',
 								returnFullResponse: true,
 							},
@@ -2102,35 +2483,74 @@ export class PdfSplitMerge implements INodeType {
 							'application/pdf',
 						);
 					} else {
+						const requestOptions =
+							unlockInputType === 'file'
+								? await createSingleFileMultipart(
+										i,
+										this.getNodeParameter('unlock_file_binary_property', i) as string,
+										body as Record<string, string | number | boolean>,
+								  )
+								: { body, json: true };
 						const responseData = await this.helpers.httpRequestWithAuthentication.call(
 							this,
 							'pdfapihubApi',
 							{
 								method: 'POST',
 								url: 'https://pdfapihub.com/api/v1/unlockPdf',
-								body,
-								json: true,
+								...requestOptions,
+								returnFullResponse: unlockInputType === 'file',
 							},
 						);
-						returnData.push({ json: responseData, pairedItem: { item: i } });
+						if (unlockInputType === 'file') {
+							const responseBody = (responseData as { body?: unknown }).body;
+							returnData.push({ json: (responseBody ?? {}) as IDataObject, pairedItem: { item: i } });
+						} else {
+							returnData.push({ json: responseData, pairedItem: { item: i } });
+						}
 					}
 				} else if (operation === 'parsePdf') {
-					const pdfUrl = this.getNodeParameter('parse_url', i) as string;
+					const parseInputType = this.getNodeParameter('parse_input_type', i) as string;
+					const pdfUrl = this.getNodeParameter('parse_url', i, '') as string;
 					const mode = this.getNodeParameter('parse_mode', i) as string;
 					const pages = this.getNodeParameter('parse_pages', i) as string;
 
-					const body = { url: pdfUrl, mode, pages };
+					const body: Record<string, unknown> = { mode, pages };
+					if (parseInputType === 'url') {
+						body.url = normalizeUrl(pdfUrl);
+					}
+
+					const requestOptions =
+						parseInputType === 'file'
+							? await createSingleFileMultipart(
+									i,
+									this.getNodeParameter('parse_file_binary_property', i) as string,
+									body as Record<string, string | number | boolean>,
+							  )
+							: { body, json: true };
 					const responseData = await this.helpers.httpRequestWithAuthentication.call(
 						this,
 						'pdfapihubApi',
 						{
 							method: 'POST',
 							url: 'https://pdfapihub.com/api/v1/pdf/parse',
-							body,
-							json: true,
+							...requestOptions,
+							returnFullResponse: parseInputType === 'file',
 						},
 					);
-					returnData.push({ json: responseData, pairedItem: { item: i } });
+					if (parseInputType === 'file') {
+						const responseBody = (responseData as { body?: unknown }).body;
+						if (typeof responseBody === 'string') {
+							try {
+								returnData.push({ json: JSON.parse(responseBody), pairedItem: { item: i } });
+							} catch {
+								returnData.push({ json: { raw: responseBody }, pairedItem: { item: i } });
+							}
+						} else {
+							returnData.push({ json: (responseBody ?? {}) as IDataObject, pairedItem: { item: i } });
+						}
+					} else {
+						returnData.push({ json: responseData, pairedItem: { item: i } });
+					}
 				}
 				// =====================================================
 				// IMAGE GENERATION (HTML to Image, URL to Image)
@@ -2175,7 +2595,7 @@ export class PdfSplitMerge implements INodeType {
 							}
 						}
 					} else {
-						body.url = this.getNodeParameter('image_gen_url', i) as string;
+						body.url = normalizeUrl(this.getNodeParameter('image_gen_url', i) as string);
 						body.full_page = this.getNodeParameter('image_full_page', i) as boolean;
 						body.wait_till = this.getNodeParameter('image_wait_till', i) as number;
 						body.wait_until = this.getNodeParameter('image_wait_until', i) as string;
@@ -2218,7 +2638,7 @@ export class PdfSplitMerge implements INodeType {
 				// OCR OPERATIONS (PDF OCR Parse, Image OCR Parse)
 				// =====================================================
 				else if (operation === 'pdfOcrParse') {
-					const pdfUrl = this.getNodeParameter('ocr_pdf_url', i) as string;
+					const pdfUrl = normalizeUrl(this.getNodeParameter('ocr_pdf_url', i) as string);
 					const pages = this.getNodeParameter('ocr_pages', i) as string;
 					const lang = this.getNodeParameter('ocr_lang', i) as string;
 					const dpi = this.getNodeParameter('ocr_dpi', i) as number;
@@ -2238,6 +2658,7 @@ export class PdfSplitMerge implements INodeType {
 					);
 					returnData.push({ json: responseData, pairedItem: { item: i } });
 				} else if (operation === 'imageOcrParse') {
+					const imageInputType = this.getNodeParameter('ocr_image_input_type', i) as string;
 					const imageUrl = this.getNodeParameter('ocr_image_url', i, '') as string;
 					const base64Image = this.getNodeParameter('ocr_base64_image', i, '') as string;
 					const lang = this.getNodeParameter('ocr_lang', i) as string;
@@ -2245,8 +2666,8 @@ export class PdfSplitMerge implements INodeType {
 					const oem = this.getNodeParameter('ocr_oem', i) as number;
 
 					const body: Record<string, unknown> = { lang, psm, oem };
-					if (imageUrl) body.image_url = imageUrl;
-					if (base64Image) body.base64_image = base64Image;
+					if (imageInputType === 'url' && imageUrl) body.image_url = normalizeUrl(imageUrl);
+					if (imageInputType === 'base64' && base64Image) body.base64_image = base64Image;
 
 					const responseData = await this.helpers.httpRequestWithAuthentication.call(
 						this,
@@ -2329,7 +2750,13 @@ export class PdfSplitMerge implements INodeType {
 						parts.push(Buffer.from(`--${multipartBoundary}--\r\n`));
 						multipartBody = Buffer.concat(parts);
 					} else if (inputType === 'url') {
-						const urls = this.getNodeParameter('img2pdf_urls', i) as string[];
+						const urls = (
+							operation === 'pngToPdf'
+								? (this.getNodeParameter('img2pdf_urls_png', i) as string[])
+								: operation === 'webpToPdf'
+									? (this.getNodeParameter('img2pdf_urls_webp', i) as string[])
+									: (this.getNodeParameter('img2pdf_urls_jpg', i) as string[])
+						).map(normalizeUrl);
 						body = { urls, output: outputFormat, output_filename: outputFilename };
 					} else {
 						const base64Images = this.getNodeParameter('img2pdf_base64', i) as string[];
@@ -2383,7 +2810,8 @@ export class PdfSplitMerge implements INodeType {
 				// PDF TO IMAGE (PDF to PNG, WebP, JPG)
 				// =====================================================
 				else if (operation === 'pdfToPng' || operation === 'pdfToWebp' || operation === 'pdfToJpg') {
-					const pdfUrl = this.getNodeParameter('pdf2img_url', i) as string;
+					const pdf2imgInputType = this.getNodeParameter('pdf2img_input_type', i) as string;
+					const pdfUrl = this.getNodeParameter('pdf2img_url', i, '') as string;
 					const pages = this.getNodeParameter('pdf2img_pages', i) as string;
 					const dpi = this.getNodeParameter('pdf2img_dpi', i) as number;
 					const quality = this.getNodeParameter('pdf2img_quality', i) as number;
@@ -2396,24 +2824,33 @@ export class PdfSplitMerge implements INodeType {
 					};
 					const imageFormat = imageFormatMap[operation];
 
-					const body = {
-						url: pdfUrl,
+					const body: Record<string, unknown> = {
 						pages,
 						image_format: imageFormat,
 						dpi,
 						quality,
 						output: outputFormat,
 					};
+					if (pdf2imgInputType === 'url') {
+						body.url = normalizeUrl(pdfUrl);
+					}
 
 					if (outputFormat === 'file') {
+						const requestOptions =
+							pdf2imgInputType === 'file'
+								? await createSingleFileMultipart(
+										i,
+										this.getNodeParameter('pdf2img_file_binary_property', i) as string,
+										body as Record<string, string | number | boolean>,
+								  )
+								: { body, json: true };
 						const responseData = await this.helpers.httpRequestWithAuthentication.call(
 							this,
 							'pdfapihubApi',
 							{
 								method: 'POST',
 								url: 'https://pdfapihub.com/api/v1/convert/pdf/image',
-								body,
-								json: true,
+								...requestOptions,
 								encoding: 'arraybuffer',
 								returnFullResponse: true,
 							},
@@ -2426,24 +2863,37 @@ export class PdfSplitMerge implements INodeType {
 							mimeType,
 						);
 					} else {
+						const requestOptions =
+							pdf2imgInputType === 'file'
+								? await createSingleFileMultipart(
+										i,
+										this.getNodeParameter('pdf2img_file_binary_property', i) as string,
+										body as Record<string, string | number | boolean>,
+								  )
+								: { body, json: true };
 						const responseData = await this.helpers.httpRequestWithAuthentication.call(
 							this,
 							'pdfapihubApi',
 							{
 								method: 'POST',
 								url: 'https://pdfapihub.com/api/v1/convert/pdf/image',
-								body,
-								json: true,
+								...requestOptions,
+								returnFullResponse: pdf2imgInputType === 'file',
 							},
 						);
-						returnData.push({ json: responseData, pairedItem: { item: i } });
+						if (pdf2imgInputType === 'file') {
+							const responseBody = (responseData as { body?: unknown }).body;
+							returnData.push({ json: (responseBody ?? {}) as IDataObject, pairedItem: { item: i } });
+						} else {
+							returnData.push({ json: responseData, pairedItem: { item: i } });
+						}
 					}
 				}
 				// =====================================================
 				// URL TO HTML
 				// =====================================================
 				else if (operation === 'fetchHtml') {
-					const url = this.getNodeParameter('html_fetch_url', i) as string;
+					const url = normalizeUrl(this.getNodeParameter('html_fetch_url', i) as string);
 					const waitTill = this.getNodeParameter('html_wait_till', i) as string;
 					const timeout = this.getNodeParameter('html_timeout', i) as number;
 					const waitForSelector = this.getNodeParameter('html_wait_for_selector', i, '') as string;
@@ -2550,7 +3000,7 @@ export class PdfSplitMerge implements INodeType {
 						parts.push(Buffer.from(`--${multipartBoundary}--\r\n`));
 						multipartBody = Buffer.concat(parts);
 					} else if (inputType === 'url') {
-						const fileUrl = this.getNodeParameter('watermark_url', i) as string;
+						const fileUrl = normalizeUrl(this.getNodeParameter('watermark_url', i) as string);
 						body = { file_url: fileUrl, text, opacity, angle, output_format: outputFormat };
 						if (fontSize > 0) body.font_size = fontSize;
 					} else {
