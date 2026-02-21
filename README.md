@@ -5,11 +5,17 @@
 An n8n community node for **PDF API Hub** (Get your api key from [https://pdfapihub.com](https://pdfapihub.com)) that can:
 
 - Parse PDFs and extract text/structured data
+- OCR PDFs/images into searchable text
 - Merge and split PDFs
 - Compress PDFs
 - Lock and unlock password-protected PDFs
+- Convert images to PDF (PNG/WebP/JPG)
+- Convert PDFs to images (PNG/WebP/JPG)
 - Convert a website URL to a PDF (screenshot)
 - Convert HTML/CSS to a PDF
+- Convert URL/HTML to image
+- Fetch HTML from URL
+- Watermark PDF/image files
 
 ## Table of contents
 
@@ -19,13 +25,21 @@ An n8n community node for **PDF API Hub** (Get your api key from [https://pdfapi
 - [How outputs work (URL vs File vs Base64)](#how-outputs-work-url-vs-file-vs-base64)
 - [Operations](#operations)
   - [PDF Parse / Extract Text](#pdf-parse--extract-text)
+  - [PDF OCR Parse](#pdf-ocr-parse)
+  - [Image OCR Parse](#image-ocr-parse)
   - [PDF Merge](#pdf-merge)
   - [PDF Split](#pdf-split)
   - [PDF Compress](#pdf-compress)
   - [PDF Lock](#pdf-lock)
   - [PDF Unlock](#pdf-unlock)
+  - [Image to PDF (PNG/WebP/JPG)](#image-to-pdf-pngwebpjpg)
+  - [PDF to Image (PNG/WebP/JPG)](#pdf-to-image-pngwebpjpg)
   - [URL to PDF (Website Screenshot)](#url-to-pdf-website-screenshot)
   - [HTML to PDF](#html-to-pdf)
+  - [URL to Image](#url-to-image)
+  - [HTML to Image](#html-to-image)
+  - [URL to HTML](#url-to-html)
+  - [Watermark (PDF/Image)](#watermark-pdfimage)
 - [Support](#support)
 
 ## Install
@@ -72,6 +86,11 @@ Many operations offer an output format/type:
 
 Tip: If you choose **File**, you can pass the binary to nodes like **Write Binary File**, **Google Drive**, **S3**, **Email**, etc.
 
+URL normalization:
+
+- If a URL does not start with `http://` or `https://`, this node auto-adds `https://`.
+- If it already starts with `http://` or `https://`, it is used as-is.
+
 ## Operations
 
 API reference docs:
@@ -85,11 +104,42 @@ https://pdfapihub.com/docs
 
 Parameters:
 
-- **PDF URL**: Publicly accessible PDF URL
+- **Input Type**: `url` or `file`
+- **PDF URL**: Publicly accessible PDF URL (URL mode)
+- **Binary Property Name**: incoming binary PDF (File mode)
 - **Parse Mode**: `text` (default), `layout`, `tables`, `full`
 - **Pages**: `all` or a range like `1-3`
 
 Returns: JSON (extracted text/structure)
+
+### PDF OCR Parse
+
+- Endpoint: `POST https://pdfapihub.com/api/v1/pdf/ocr/parse`
+- Node: **Resource** → OCR to Searchable Text (PDF/Image)
+- Operation: **PDF OCR Parse**
+
+Parameters:
+
+- **PDF URL** (default: `https://pdfapihub.com/sample-pdfinvoice-with-image.pdf`)
+- **Pages**: page number or `all` (default: `1`, max supported: `8`)
+- **Language**, **DPI**, **PSM**, **OEM**
+
+Returns: JSON (OCR text)
+
+### Image OCR Parse
+
+- Endpoint: `POST https://pdfapihub.com/api/v1/image/ocr/parse`
+- Node: **Resource** → OCR to Searchable Text (PDF/Image)
+- Operation: **Image OCR Parse**
+
+Parameters:
+
+- **Image Input Type**: `url` or `base64`
+- **Image URL** (default: `https://pdfapihub.com/sample-invoicepage.png`) (URL mode)
+- **Base64 Image** (Base64 mode)
+- **Language**, **PSM**, **OEM**
+
+Returns: JSON (OCR text)
 
 ### PDF Merge
 
@@ -117,7 +167,9 @@ Returns:
 
 Parameters:
 
-- **PDF URL**: URL of the PDF to split
+- **Input Type**: `url` or `file`
+- **PDF URL**: URL of the PDF to split (URL mode)
+- **Binary Property Name**: incoming binary PDF (File mode)
 - **Split Type**:
   - `pages` (extract specific pages)
   - `each` (split every page)
@@ -139,7 +191,9 @@ Returns:
 
 Parameters:
 
-- **PDF URL**
+- **Input Type**: `url` or `file`
+- **PDF URL** (URL mode)
+- **Binary Property Name** (File mode)
 - **Compression Level**: `low` / `medium` / `high` / `max`
 - **Output Type**: `url` / `file` / `base64`
 - **Output Filename**: used when output is file
@@ -157,7 +211,9 @@ Returns:
 
 Parameters:
 
-- **PDF URL**
+- **Input Type**: `url` or `file`
+- **PDF URL** (URL mode)
+- **Binary Property Name** (File mode)
 - **Password**: password to set
 - **Input Password**: optional (if the input PDF is already encrypted)
 - **Output Type**: `url` / `file` / `base64`
@@ -176,7 +232,9 @@ Returns:
 
 Parameters:
 
-- **PDF URL**
+- **Input Type**: `url` or `file`
+- **PDF URL** (URL mode)
+- **Binary Property Name** (File mode)
 - **Password**: password to unlock
 - **Output Type**: `url` / `file` / `base64`
 - **Output Filename**
@@ -207,6 +265,35 @@ Returns:
 - `url`: JSON with a PDF URL
 - `file`: binary PDF
 
+### Image to PDF (PNG/WebP/JPG)
+
+- Endpoint: `POST https://pdfapihub.com/api/v1/convert/image/pdf`
+- Node: **Resource** → Image to PDF
+- Operations: **PNG to PDF**, **WebP to PDF**, **JPG to PDF**
+
+Parameters:
+
+- **Input Type**: `url` / `base64` / `file`
+- URL placeholders:
+  - PNG: `https://pdfapihub.com/sample.png`
+  - WebP: `https://pdfapihub.com/sample.webp`
+  - JPG: `https://pdfapihub.com/sample.jpg`
+- **Output Format**: `url` / `base64` / `both` / `file`
+- **Output Filename**
+
+### PDF to Image (PNG/WebP/JPG)
+
+- Endpoint: `POST https://pdfapihub.com/api/v1/convert/pdf/image`
+- Node: **Resource** → PDF to Image
+- Operations: **PDF to PNG**, **PDF to WebP**, **PDF to JPG**
+
+Parameters:
+
+- **Input Type**: `url` or `file`
+- **PDF URL** (URL mode)
+- **Binary Property Name** (File mode)
+- **Pages**, **DPI**, **Quality**, **Output Format**
+
 ### HTML to PDF
 
 - Endpoint: `POST https://pdfapihub.com/api/v1/generatePdf`
@@ -227,6 +314,38 @@ Returns:
 
 - `url`: JSON with a PDF URL
 - `file`: binary PDF
+
+### URL to Image
+
+- Endpoint: `POST https://pdfapihub.com/api/v1/generateImage`
+- Node: **Resource** → Website / HTML to Image
+- Operation: **URL to Image**
+
+Returns JSON or binary image (based on output format).
+
+### HTML to Image
+
+- Endpoint: `POST https://pdfapihub.com/api/v1/generateImage`
+- Node: **Resource** → Website / HTML to Image
+- Operation: **HTML to Image**
+
+Returns JSON or binary image (based on output format).
+
+### URL to HTML
+
+- Endpoint: `POST https://pdfapihub.com/api/v1/url-to-html`
+- Node: **Resource** → URL to HTML
+- Operation: **Fetch HTML**
+
+Defaults include URL `http://example.com/`.
+
+### Watermark (PDF/Image)
+
+- Endpoint: `POST https://pdfapihub.com/api/v1/watermark`
+- Node: **Resource** → Watermark PDF
+- Operation: **Add Watermark**
+
+Supports URL/base64/file input and file/url/base64/both output.
 
 ## Support
 
