@@ -1326,6 +1326,22 @@ export class PdfSplitMerge implements INodeType {
 			// OCR PROPERTIES (PDF OCR Parse, Image OCR Parse)
 			// =====================================================
 			{
+				displayName: 'PDF Input Type',
+				name: 'ocr_pdf_input_type',
+				type: 'options',
+				options: [
+					{ name: 'URL', value: 'url' },
+					{ name: 'File (Binary)', value: 'file' },
+				],
+				default: 'url',
+				description: 'How to provide the PDF for OCR',
+				displayOptions: {
+					show: {
+						operation: ['pdfOcrParse'],
+					},
+				},
+			},
+			{
 				displayName: 'PDF URL',
 				name: 'ocr_pdf_url',
 				type: 'string',
@@ -1334,6 +1350,20 @@ export class PdfSplitMerge implements INodeType {
 				displayOptions: {
 					show: {
 						operation: ['pdfOcrParse'],
+						ocr_pdf_input_type: ['url'],
+					},
+				},
+			},
+			{
+				displayName: 'Binary Property Name',
+				name: 'ocr_pdf_binary_property',
+				type: 'string',
+				default: 'data',
+				description: 'Binary property containing the PDF file',
+				displayOptions: {
+					show: {
+						operation: ['pdfOcrParse'],
+						ocr_pdf_input_type: ['file'],
 					},
 				},
 			},
@@ -1356,6 +1386,7 @@ export class PdfSplitMerge implements INodeType {
 				options: [
 					{ name: 'URL', value: 'url' },
 					{ name: 'Base64', value: 'base64' },
+					{ name: 'File (Binary)', value: 'file' },
 				],
 				default: 'url',
 				description: 'How to provide the image',
@@ -1388,6 +1419,19 @@ export class PdfSplitMerge implements INodeType {
 					show: {
 						operation: ['imageOcrParse'],
 						ocr_image_input_type: ['base64'],
+						},
+					},
+				},
+				{
+					displayName: 'Binary Property Name',
+					name: 'ocr_image_binary_property',
+					type: 'string',
+					default: 'data',
+					description: 'Binary property containing the image file',
+					displayOptions: {
+						show: {
+							operation: ['imageOcrParse'],
+							ocr_image_input_type: ['file'],
 					},
 				},
 			},
@@ -2638,29 +2682,64 @@ export class PdfSplitMerge implements INodeType {
 				// OCR OPERATIONS (PDF OCR Parse, Image OCR Parse)
 				// =====================================================
 				else if (operation === 'pdfOcrParse') {
-					const pdfUrl = normalizeUrl(this.getNodeParameter('ocr_pdf_url', i) as string);
+					const pdfInputType = this.getNodeParameter('ocr_pdf_input_type', i) as string;
+					const pdfUrl = this.getNodeParameter('ocr_pdf_url', i, '') as string;
 					const pages = this.getNodeParameter('ocr_pages', i) as string;
 					const lang = this.getNodeParameter('ocr_lang', i) as string;
 					const dpi = this.getNodeParameter('ocr_dpi', i) as number;
 					const psm = this.getNodeParameter('ocr_psm', i) as number;
 					const oem = this.getNodeParameter('ocr_oem', i) as number;
 
-					const body = { url: pdfUrl, pages, lang, dpi, psm, oem };
+					const body: Record<string, unknown> = { pages, lang, dpi, psm, oem };
+					if (pdfInputType === 'url') {
+						body.url = normalizeUrl(pdfUrl);
+					}
+
+					const requestOptions =
+						pdfInputType === 'file'
+							? await createSingleFileMultipart(
+									i,
+									this.getNodeParameter('ocr_pdf_binary_property', i) as string,
+									body as Record<string, string | number | boolean>,
+							  )
+							: { body, json: true };
 					const responseData = await this.helpers.httpRequestWithAuthentication.call(
 						this,
 						'pdfapihubApi',
 						{
 							method: 'POST',
 							url: 'https://pdfapihub.com/api/v1/pdf/ocr/parse',
-							body,
-							json: true,
+							...requestOptions,
+							returnFullResponse: pdfInputType === 'file',
 						},
 					);
-					returnData.push({ json: responseData, pairedItem: { item: i } });
+
+					if (pdfInputType === 'file') {
+						const responseBody = (responseData as { body?: unknown }).body;
+						if (typeof responseBody === 'string') {
+							try {
+								returnData.push({ json: JSON.parse(responseBody), pairedItem: { item: i } });
+							} catch {
+								returnData.push({ json: { raw: responseBody }, pairedItem: { item: i } });
+							}
+						} else if (Buffer.isBuffer(responseBody)) {
+							const text = responseBody.toString('utf8');
+							try {
+								returnData.push({ json: JSON.parse(text), pairedItem: { item: i } });
+							} catch {
+								returnData.push({ json: { raw: text }, pairedItem: { item: i } });
+							}
+						} else {
+							returnData.push({ json: (responseBody ?? {}) as IDataObject, pairedItem: { item: i } });
+						}
+					} else {
+						returnData.push({ json: responseData, pairedItem: { item: i } });
+					}
 				} else if (operation === 'imageOcrParse') {
 					const imageInputType = this.getNodeParameter('ocr_image_input_type', i) as string;
 					const imageUrl = this.getNodeParameter('ocr_image_url', i, '') as string;
 					const base64Image = this.getNodeParameter('ocr_base64_image', i, '') as string;
+					const imageBinaryProperty = this.getNodeParameter('ocr_image_binary_property', i, 'data') as string;
 					const lang = this.getNodeParameter('ocr_lang', i) as string;
 					const psm = this.getNodeParameter('ocr_psm', i) as number;
 					const oem = this.getNodeParameter('ocr_oem', i) as number;
@@ -2669,17 +2748,47 @@ export class PdfSplitMerge implements INodeType {
 					if (imageInputType === 'url' && imageUrl) body.image_url = normalizeUrl(imageUrl);
 					if (imageInputType === 'base64' && base64Image) body.base64_image = base64Image;
 
+					const requestOptions =
+						imageInputType === 'file'
+							? await createSingleFileMultipart(
+									i,
+									imageBinaryProperty,
+									body as Record<string, string | number | boolean>,
+							  )
+							: { body, json: true };
+
 					const responseData = await this.helpers.httpRequestWithAuthentication.call(
 						this,
 						'pdfapihubApi',
 						{
 							method: 'POST',
 							url: 'https://pdfapihub.com/api/v1/image/ocr/parse',
-							body,
-							json: true,
+							...requestOptions,
+							returnFullResponse: imageInputType === 'file',
 						},
 					);
-					returnData.push({ json: responseData, pairedItem: { item: i } });
+
+					if (imageInputType === 'file') {
+						const responseBody = (responseData as { body?: unknown }).body;
+						if (typeof responseBody === 'string') {
+							try {
+								returnData.push({ json: JSON.parse(responseBody), pairedItem: { item: i } });
+							} catch {
+								returnData.push({ json: { raw: responseBody }, pairedItem: { item: i } });
+							}
+						} else if (Buffer.isBuffer(responseBody)) {
+							const text = responseBody.toString('utf8');
+							try {
+								returnData.push({ json: JSON.parse(text), pairedItem: { item: i } });
+							} catch {
+								returnData.push({ json: { raw: text }, pairedItem: { item: i } });
+							}
+						} else {
+							returnData.push({ json: (responseBody ?? {}) as IDataObject, pairedItem: { item: i } });
+						}
+					} else {
+						returnData.push({ json: responseData, pairedItem: { item: i } });
+					}
 				}
 				// =====================================================
 				// IMAGE TO PDF (PNG, WebP, JPG to PDF)

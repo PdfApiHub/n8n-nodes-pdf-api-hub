@@ -120,7 +120,9 @@ Returns: JSON (extracted text/structure)
 
 Parameters:
 
-- **PDF URL** (default: `https://pdfapihub.com/sample-pdfinvoice-with-image.pdf`)
+- **PDF Input Type**: `url` or `file`
+- **PDF URL** (default: `https://pdfapihub.com/sample-pdfinvoice-with-image.pdf`) (URL mode)
+- **Binary Property Name**: incoming binary PDF (File mode)
 - **Pages**: page number or `all` (default: `1`, max supported: `8`)
 - **Language**, **DPI**, **PSM**, **OEM**
 
@@ -134,9 +136,10 @@ Returns: JSON (OCR text)
 
 Parameters:
 
-- **Image Input Type**: `url` or `base64`
+- **Image Input Type**: `url`, `base64`, or `file`
 - **Image URL** (default: `https://pdfapihub.com/sample-invoicepage.png`) (URL mode)
 - **Base64 Image** (Base64 mode)
+- **Binary Property Name**: incoming binary image (File mode)
 - **Language**, **PSM**, **OEM**
 
 Returns: JSON (OCR text)
