@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-pdf-api-hub",
-	"version": "4.0.8",
+	"version": "4.0.9",
 	"description": "n8n community node to parse, extract, merge, convert, and lock PDFs using the PDF API Hub",
 	"license": "MIT",
 	"homepage": "",
