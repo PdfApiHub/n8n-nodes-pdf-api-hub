@@ -11,6 +11,8 @@ An n8n community node for **PDF API Hub** (Get your api key from [https://pdfapi
 - Lock and unlock password-protected PDFs
 - Convert images to PDF (PNG/WebP/JPG)
 - Convert PDFs to images (PNG/WebP/JPG)
+- Convert Office-like documents to PDF (DOCX/DOC/PPTX/XLSX/etc.)
+- Convert PDFs to DOCX
 - Convert a website URL to a PDF (screenshot)
 - Convert HTML/CSS to a PDF
 - Convert URL/HTML to image
@@ -33,6 +35,8 @@ An n8n community node for **PDF API Hub** (Get your api key from [https://pdfapi
   - [PDF Lock](#pdf-lock)
   - [PDF Unlock](#pdf-unlock)
   - [Image to PDF (PNG/WebP/JPG)](#image-to-pdf-pngwebpjpg)
+  - [Document to PDF (DOCX/DOC/PPTX/XLSX/etc.)](#document-to-pdf-docxdocpptxxlsxetc)
+  - [PDF to DOCX](#pdf-to-docx)
   - [PDF to Image (PNG/WebP/JPG)](#pdf-to-image-pngwebpjpg)
   - [URL to PDF (Website Screenshot)](#url-to-pdf-website-screenshot)
   - [HTML to PDF](#html-to-pdf)
@@ -281,6 +285,37 @@ Parameters:
   - PNG: `https://pdfapihub.com/sample.png`
   - WebP: `https://pdfapihub.com/sample.webp`
   - JPG: `https://pdfapihub.com/sample.jpg`
+- **Output Format**: `url` / `base64` / `both` / `file`
+- **Output Filename**
+
+### Document to PDF (DOCX/DOC/PPTX/XLSX/etc.)
+
+- Endpoint: `POST https://pdfapihub.com/api/v1/convert/document/pdf`
+- Node: **Resource** → Document Conversion
+- Operation: **DOCX / Document to PDF**
+
+Parameters:
+
+- **Input Type**: `url` / `base64` / `file`
+- **Document URL** (URL mode)
+- **Base64 File** (Base64 mode)
+- **Binary Property Name** (File mode)
+- **Input Format** (optional): `doc`, `docx`, `odt`, `rtf`, `txt`, `ppt`, `pptx`, `odp`, `xls`, `xlsx`, `ods`
+- **Output Format**: `url` / `base64` / `both` / `file`
+- **Output Filename**
+
+### PDF to DOCX
+
+- Endpoint: `POST https://pdfapihub.com/api/v1/convert/pdf/docx`
+- Node: **Resource** → Document Conversion
+- Operation: **PDF to DOCX**
+
+Parameters:
+
+- **Input Type**: `url` / `base64` / `file`
+- **PDF URL** (URL mode)
+- **Base64 PDF** (Base64 mode)
+- **Binary Property Name** (File mode)
 - **Output Format**: `url` / `base64` / `both` / `file`
 - **Output Filename**
 

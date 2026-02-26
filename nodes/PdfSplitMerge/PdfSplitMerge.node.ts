@@ -36,6 +36,11 @@ export class PdfSplitMerge implements INodeType {
 				noDataExpression: true,
 				options: [
 					{
+						name: 'Document Conversion',
+						value: 'documentConversion',
+						description: 'Convert DOCX/Office documents to PDF and PDF to DOCX',
+					},
+					{
 						name: 'Image to PDF',
 						value: 'imageToPdf',
 						description: 'Convert images (PNG, WebP, JPG) to PDF',
@@ -201,6 +206,33 @@ export class PdfSplitMerge implements INodeType {
 					},
 				],
 				default: 'pngToPdf',
+			},
+			// Document Conversion Operations
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: {
+					show: {
+						resource: ['documentConversion'],
+					},
+				},
+				options: [
+					{
+						name: 'DOCX / Document to PDF',
+						value: 'docxToPdf',
+						description: 'Convert Office-like documents (DOCX, PPTX, XLSX, etc.) to PDF',
+						action: 'Convert a document to PDF',
+					},
+					{
+						name: 'PDF to DOCX',
+						value: 'pdfToDocx',
+						description: 'Convert PDF to DOCX',
+						action: 'Convert a pdf to docx',
+					},
+				],
+				default: 'docxToPdf',
 			},
 			// PDF to Image Operations
 			{
@@ -1619,6 +1651,210 @@ export class PdfSplitMerge implements INodeType {
 			},
 
 			// =====================================================
+			// DOCUMENT CONVERSION PROPERTIES
+			// =====================================================
+			{
+				displayName: 'Input Type',
+				name: 'doc2pdf_input_type',
+				type: 'options',
+				options: [
+					{ name: 'URL', value: 'url' },
+					{ name: 'Base64', value: 'base64' },
+					{ name: 'File (Binary)', value: 'file' },
+				],
+				default: 'url',
+				description: 'How to provide the source document',
+				displayOptions: {
+					show: {
+						operation: ['docxToPdf'],
+					},
+				},
+			},
+			{
+				displayName: 'Document URL',
+				name: 'doc2pdf_url',
+				type: 'string',
+				default: '',
+				description: 'Public URL of the source document',
+				placeholder: 'https://example.com/sample.docx',
+				displayOptions: {
+					show: {
+						operation: ['docxToPdf'],
+						doc2pdf_input_type: ['url'],
+					},
+				},
+			},
+			{
+				displayName: 'Base64 File',
+				name: 'doc2pdf_base64_file',
+				type: 'string',
+				default: '',
+				description: 'Base64 encoded source document',
+				displayOptions: {
+					show: {
+						operation: ['docxToPdf'],
+						doc2pdf_input_type: ['base64'],
+					},
+				},
+			},
+			{
+				displayName: 'Binary Property Name',
+				name: 'doc2pdf_file_binary_property',
+				type: 'string',
+				default: 'data',
+				description: 'Binary property containing the source document file',
+				displayOptions: {
+					show: {
+						operation: ['docxToPdf'],
+						doc2pdf_input_type: ['file'],
+					},
+				},
+			},
+			{
+				displayName: 'Input Format',
+				name: 'doc2pdf_input_format',
+				type: 'options',
+				options: [
+					{ name: 'Auto Detect', value: '' },
+					{ name: 'DOC', value: 'doc' },
+					{ name: 'DOCX', value: 'docx' },
+					{ name: 'ODP', value: 'odp' },
+					{ name: 'ODS', value: 'ods' },
+					{ name: 'ODT', value: 'odt' },
+					{ name: 'PPT', value: 'ppt' },
+					{ name: 'PPTX', value: 'pptx' },
+					{ name: 'RTF', value: 'rtf' },
+					{ name: 'TXT', value: 'txt' },
+					{ name: 'XLS', value: 'xls' },
+					{ name: 'XLSX', value: 'xlsx' },
+				],
+				default: '',
+				description: 'Optional source format (recommended for base64 input)',
+				displayOptions: {
+					show: {
+						operation: ['docxToPdf'],
+					},
+				},
+			},
+			{
+				displayName: 'Output Format',
+				name: 'doc2pdf_output',
+				type: 'options',
+				options: [
+					{ name: 'URL', value: 'url' },
+					{ name: 'Base64', value: 'base64' },
+					{ name: 'Both', value: 'both' },
+					{ name: 'File', value: 'file' },
+				],
+				default: 'url',
+				description: 'Format of the output PDF',
+				displayOptions: {
+					show: {
+						operation: ['docxToPdf'],
+					},
+				},
+			},
+			{
+				displayName: 'Output Filename',
+				name: 'doc2pdf_output_filename',
+				type: 'string',
+				default: 'converted.pdf',
+				description: 'Optional output filename (used for file output)',
+				displayOptions: {
+					show: {
+						operation: ['docxToPdf'],
+					},
+				},
+			},
+			{
+				displayName: 'Input Type',
+				name: 'pdf2docx_input_type',
+				type: 'options',
+				options: [
+					{ name: 'URL', value: 'url' },
+					{ name: 'Base64', value: 'base64' },
+					{ name: 'File (Binary)', value: 'file' },
+				],
+				default: 'url',
+				description: 'How to provide the source PDF',
+				displayOptions: {
+					show: {
+						operation: ['pdfToDocx'],
+					},
+				},
+			},
+			{
+				displayName: 'PDF URL',
+				name: 'pdf2docx_url',
+				type: 'string',
+				default: '',
+				description: 'Public URL of the source PDF',
+				placeholder: 'https://pdfapihub.com/sample.pdf',
+				displayOptions: {
+					show: {
+						operation: ['pdfToDocx'],
+						pdf2docx_input_type: ['url'],
+					},
+				},
+			},
+			{
+				displayName: 'Base64 PDF',
+				name: 'pdf2docx_base64_file',
+				type: 'string',
+				default: '',
+				description: 'Base64 encoded PDF',
+				displayOptions: {
+					show: {
+						operation: ['pdfToDocx'],
+						pdf2docx_input_type: ['base64'],
+					},
+				},
+			},
+			{
+				displayName: 'Binary Property Name',
+				name: 'pdf2docx_file_binary_property',
+				type: 'string',
+				default: 'data',
+				description: 'Binary property containing the source PDF file',
+				displayOptions: {
+					show: {
+						operation: ['pdfToDocx'],
+						pdf2docx_input_type: ['file'],
+					},
+				},
+			},
+			{
+				displayName: 'Output Format',
+				name: 'pdf2docx_output',
+				type: 'options',
+				options: [
+					{ name: 'URL', value: 'url' },
+					{ name: 'Base64', value: 'base64' },
+					{ name: 'Both', value: 'both' },
+					{ name: 'File', value: 'file' },
+				],
+				default: 'url',
+				description: 'Format of the output DOCX',
+				displayOptions: {
+					show: {
+						operation: ['pdfToDocx'],
+					},
+				},
+			},
+			{
+				displayName: 'Output Filename',
+				name: 'pdf2docx_output_filename',
+				type: 'string',
+				default: 'converted.docx',
+				description: 'Optional output filename (used for file output)',
+				displayOptions: {
+					show: {
+						operation: ['pdfToDocx'],
+					},
+				},
+			},
+
+			// =====================================================
 			// PDF TO IMAGE PROPERTIES
 			// =====================================================
 			{
@@ -2913,6 +3149,176 @@ export class PdfSplitMerge implements INodeType {
 							},
 						);
 						returnData.push({ json: responseData as IDataObject, pairedItem: { item: i } });
+					}
+				}
+				// =====================================================
+				// DOCUMENT CONVERSION (DOCX/Office <-> PDF)
+				// =====================================================
+				else if (operation === 'docxToPdf') {
+					const inputType = this.getNodeParameter('doc2pdf_input_type', i) as string;
+					const outputFormat = this.getNodeParameter('doc2pdf_output', i) as string;
+					const outputFilename = this.getNodeParameter('doc2pdf_output_filename', i) as string;
+					const inputFormat = this.getNodeParameter('doc2pdf_input_format', i, '') as string;
+
+					let requestOptions: Record<string, unknown>;
+
+					if (inputType === 'file') {
+						const fields: Record<string, string | number | boolean> = {
+							output: outputFormat,
+							output_filename: outputFilename,
+						};
+						if (inputFormat) {
+							fields.input_format = inputFormat;
+						}
+
+						requestOptions = await createSingleFileMultipart(
+							i,
+							this.getNodeParameter('doc2pdf_file_binary_property', i) as string,
+							fields,
+						);
+					} else {
+						const body: Record<string, unknown> = {
+							output: outputFormat,
+							output_filename: outputFilename,
+						};
+
+						if (inputType === 'url') {
+							body.url = normalizeUrl(this.getNodeParameter('doc2pdf_url', i) as string);
+						} else {
+							body.file = this.getNodeParameter('doc2pdf_base64_file', i) as string;
+						}
+
+						if (inputFormat) {
+							body.input_format = inputFormat;
+						}
+
+						requestOptions = { body, json: true };
+					}
+
+					if (outputFormat === 'file') {
+						const responseData = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'pdfapihubApi',
+							{
+								method: 'POST',
+								url: 'https://pdfapihub.com/api/v1/convert/document/pdf',
+								...requestOptions,
+								encoding: 'arraybuffer',
+								returnFullResponse: true,
+							},
+						);
+						await prepareBinaryResponse(
+							i,
+							responseData as { body: ArrayBuffer; headers?: Record<string, unknown> },
+							outputFilename || 'converted.pdf',
+							'application/pdf',
+						);
+					} else {
+						const responseData = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'pdfapihubApi',
+							{
+								method: 'POST',
+								url: 'https://pdfapihub.com/api/v1/convert/document/pdf',
+								...requestOptions,
+								returnFullResponse: inputType === 'file',
+							},
+						);
+						if (inputType === 'file') {
+							const responseBody = (responseData as { body?: unknown }).body;
+							if (typeof responseBody === 'string') {
+								try {
+									returnData.push({ json: JSON.parse(responseBody), pairedItem: { item: i } });
+								} catch {
+									returnData.push({ json: { raw: responseBody }, pairedItem: { item: i } });
+								}
+							} else {
+								returnData.push({
+									json: (responseBody ?? {}) as IDataObject,
+									pairedItem: { item: i },
+								});
+							}
+						} else {
+							returnData.push({ json: responseData, pairedItem: { item: i } });
+						}
+					}
+				} else if (operation === 'pdfToDocx') {
+					const inputType = this.getNodeParameter('pdf2docx_input_type', i) as string;
+					const outputFormat = this.getNodeParameter('pdf2docx_output', i) as string;
+					const outputFilename = this.getNodeParameter('pdf2docx_output_filename', i) as string;
+
+					let requestOptions: Record<string, unknown>;
+
+					if (inputType === 'file') {
+						requestOptions = await createSingleFileMultipart(
+							i,
+							this.getNodeParameter('pdf2docx_file_binary_property', i) as string,
+							{
+								output: outputFormat,
+								output_filename: outputFilename,
+							},
+						);
+					} else {
+						const body: Record<string, unknown> = {
+							output: outputFormat,
+							output_filename: outputFilename,
+						};
+
+						if (inputType === 'url') {
+							body.url = normalizeUrl(this.getNodeParameter('pdf2docx_url', i) as string);
+						} else {
+							body.file = this.getNodeParameter('pdf2docx_base64_file', i) as string;
+						}
+
+						requestOptions = { body, json: true };
+					}
+
+					if (outputFormat === 'file') {
+						const responseData = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'pdfapihubApi',
+							{
+								method: 'POST',
+								url: 'https://pdfapihub.com/api/v1/convert/pdf/docx',
+								...requestOptions,
+								encoding: 'arraybuffer',
+								returnFullResponse: true,
+							},
+						);
+						await prepareBinaryResponse(
+							i,
+							responseData as { body: ArrayBuffer; headers?: Record<string, unknown> },
+							outputFilename || 'converted.docx',
+							'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+						);
+					} else {
+						const responseData = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'pdfapihubApi',
+							{
+								method: 'POST',
+								url: 'https://pdfapihub.com/api/v1/convert/pdf/docx',
+								...requestOptions,
+								returnFullResponse: inputType === 'file',
+							},
+						);
+						if (inputType === 'file') {
+							const responseBody = (responseData as { body?: unknown }).body;
+							if (typeof responseBody === 'string') {
+								try {
+									returnData.push({ json: JSON.parse(responseBody), pairedItem: { item: i } });
+								} catch {
+									returnData.push({ json: { raw: responseBody }, pairedItem: { item: i } });
+								}
+							} else {
+								returnData.push({
+									json: (responseBody ?? {}) as IDataObject,
+									pairedItem: { item: i },
+								});
+							}
+						} else {
+							returnData.push({ json: responseData, pairedItem: { item: i } });
+						}
 					}
 				}
 				// =====================================================
