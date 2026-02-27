@@ -15,7 +15,7 @@ export class PdfSplitMerge implements INodeType {
 		group: ['transform'],
 		version: 1,
 		description:
-			'PDF and image tools: merge/split/compress, OCR, convert, lock/unlock, watermark, and URL/HTML processing.',
+			'PDF and image tools: merge/split/compress, OCR, convert, document similarity, lock/unlock, watermark, and URL/HTML processing.',
 		defaults: {
 			name: 'PDF API Hub',
 		},
@@ -39,6 +39,11 @@ export class PdfSplitMerge implements INodeType {
 						name: 'Document Conversion',
 						value: 'documentConversion',
 						description: 'Convert DOCX/Office documents to PDF and PDF to DOCX',
+					},
+					{
+						name: 'Document Intelligence',
+						value: 'documentIntelligence',
+						description: 'Compare similarity between two image/PDF documents',
 					},
 					{
 						name: 'Image to PDF',
@@ -234,6 +239,27 @@ export class PdfSplitMerge implements INodeType {
 				],
 				default: 'docxToPdf',
 			},
+			// Document Intelligence Operations
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: {
+					show: {
+						resource: ['documentIntelligence'],
+					},
+				},
+				options: [
+					{
+						name: 'Similarity Check',
+						value: 'documentSimilarity',
+						description: 'Compare similarity between two images/PDF documents',
+						action: 'Compare similarity between two documents',
+					},
+				],
+				default: 'documentSimilarity',
+			},
 			// PDF to Image Operations
 			{
 				displayName: 'Operation',
@@ -256,7 +282,7 @@ export class PdfSplitMerge implements INodeType {
 						name: 'PDF to WebP',
 						value: 'pdfToWebp',
 						description: 'Convert PDF pages to WebP images',
-						action: 'Convert pdf to web p images',
+						action: 'Convert pdf to webp images',
 					},
 					{
 						name: 'PDF to JPG',
@@ -1956,6 +1982,129 @@ export class PdfSplitMerge implements INodeType {
 			},
 
 			// =====================================================
+			// DOCUMENT INTELLIGENCE (DOCUMENT SIMILARITY)
+			// =====================================================
+			{
+				displayName: 'Input Mode',
+				name: 'doc_similarity_input_mode',
+				type: 'options',
+				options: [
+					{ name: 'URLs', value: 'url', description: 'Use two public URLs' },
+					{ name: 'Base64', value: 'base64', description: 'Use two Base64 strings (or data URLs)' },
+					{ name: 'Binary Files', value: 'file', description: 'Use two binary input properties' },
+				],
+				default: 'url',
+				description: 'How to provide the two documents',
+				displayOptions: {
+					show: {
+						operation: ['documentSimilarity'],
+					},
+				},
+			},
+			{
+				displayName: 'URL 1',
+				name: 'doc_similarity_url1',
+				type: 'string',
+				default: 'https://pdfapihub.com/sample-document-similarity-1.jpg',
+				description: 'URL to first image/PDF',
+				displayOptions: {
+					show: {
+						operation: ['documentSimilarity'],
+						doc_similarity_input_mode: ['url'],
+					},
+				},
+			},
+			{
+				displayName: 'URL 2',
+				name: 'doc_similarity_url2',
+				type: 'string',
+				default: 'https://pdfapihub.com/sample-document-similarity-2.jpg',
+				description: 'URL to second image/PDF',
+				displayOptions: {
+					show: {
+						operation: ['documentSimilarity'],
+						doc_similarity_input_mode: ['url'],
+					},
+				},
+			},
+			{
+				displayName: 'Image/PDF 1 Base64',
+				name: 'doc_similarity_base64_1',
+				type: 'string',
+				typeOptions: {
+					rows: 4,
+				},
+				default: '',
+				description: 'Base64 string (or data URL) for first image/PDF',
+				displayOptions: {
+					show: {
+						operation: ['documentSimilarity'],
+						doc_similarity_input_mode: ['base64'],
+					},
+				},
+			},
+			{
+				displayName: 'Image/PDF 2 Base64',
+				name: 'doc_similarity_base64_2',
+				type: 'string',
+				typeOptions: {
+					rows: 4,
+				},
+				default: '',
+				description: 'Base64 string (or data URL) for second image/PDF',
+				displayOptions: {
+					show: {
+						operation: ['documentSimilarity'],
+						doc_similarity_input_mode: ['base64'],
+					},
+				},
+			},
+			{
+				displayName: 'File 1 Binary Property',
+				name: 'doc_similarity_file1_binary_property',
+				type: 'string',
+				default: 'data1',
+				description: 'Binary property containing first image/PDF file',
+				displayOptions: {
+					show: {
+						operation: ['documentSimilarity'],
+						doc_similarity_input_mode: ['file'],
+					},
+				},
+			},
+			{
+				displayName: 'File 2 Binary Property',
+				name: 'doc_similarity_file2_binary_property',
+				type: 'string',
+				default: 'data2',
+				description: 'Binary property containing second image/PDF file',
+				displayOptions: {
+					show: {
+						operation: ['documentSimilarity'],
+						doc_similarity_input_mode: ['file'],
+					},
+				},
+			},
+			{
+				displayName: 'Method',
+				name: 'doc_similarity_method',
+				type: 'options',
+				options: [
+					{ name: 'Auto', value: 'auto' },
+					{ name: 'Feature Match', value: 'feature_match' },
+					{ name: 'SSIM', value: 'ssim' },
+					{ name: 'PHash', value: 'phash' },
+				],
+				default: 'auto',
+				description: 'Similarity method',
+				displayOptions: {
+					show: {
+						operation: ['documentSimilarity'],
+					},
+				},
+			},
+
+			// =====================================================
 			// URL TO HTML PROPERTIES
 			// =====================================================
 			{
@@ -2271,6 +2420,55 @@ export class PdfSplitMerge implements INodeType {
 						`--${boundary}\r\n` +
 							`Content-Disposition: form-data; name="${key}"\r\n\r\n` +
 							`${String(value)}\r\n`,
+					),
+				);
+			}
+
+			parts.push(Buffer.from(`--${boundary}--\r\n`));
+
+			return {
+				body: Buffer.concat(parts),
+				headers: {
+					'Content-Type': `multipart/form-data; boundary=${boundary}`,
+				},
+			};
+		};
+
+		const createTwoFileMultipart = async (
+			itemIndex: number,
+			file1BinaryProperty: string,
+			file2BinaryProperty: string,
+			method: string,
+		) => {
+			const boundary = `----n8nFormBoundary${Math.random().toString(36).slice(2)}`;
+			const parts: Buffer[] = [];
+
+			const appendFile = async (fieldName: 'file1' | 'file2', binaryPropertyName: string) => {
+				const binaryData = this.helpers.assertBinaryData(itemIndex, binaryPropertyName);
+				const binaryDataBuffer = await this.helpers.getBinaryDataBuffer(itemIndex, binaryPropertyName);
+				const fileName = binaryData.fileName ?? `${fieldName}.bin`;
+				const contentType = binaryData.mimeType ?? 'application/octet-stream';
+
+				parts.push(
+					Buffer.from(
+						`--${boundary}\r\n` +
+							`Content-Disposition: form-data; name="${fieldName}"; filename="${fileName}"\r\n` +
+							`Content-Type: ${contentType}\r\n\r\n`,
+					),
+				);
+				parts.push(Buffer.from(binaryDataBuffer));
+				parts.push(Buffer.from('\r\n'));
+			};
+
+			await appendFile('file1', file1BinaryProperty);
+			await appendFile('file2', file2BinaryProperty);
+
+			if (method) {
+				parts.push(
+					Buffer.from(
+						`--${boundary}\r\n` +
+							'Content-Disposition: form-data; name="method"\r\n\r\n' +
+							`${method}\r\n`,
 					),
 				);
 			}
@@ -3024,6 +3222,84 @@ export class PdfSplitMerge implements INodeType {
 						}
 					} else {
 						returnData.push({ json: responseData, pairedItem: { item: i } });
+					}
+				}
+				// =====================================================
+				// DOCUMENT INTELLIGENCE (SIMILARITY CHECK)
+				// =====================================================
+				else if (operation === 'documentSimilarity') {
+					const inputMode = this.getNodeParameter('doc_similarity_input_mode', i) as string;
+					const method = this.getNodeParameter('doc_similarity_method', i) as string;
+
+					if (inputMode === 'file') {
+						const file1BinaryProperty = this.getNodeParameter(
+							'doc_similarity_file1_binary_property',
+							i,
+						) as string;
+						const file2BinaryProperty = this.getNodeParameter(
+							'doc_similarity_file2_binary_property',
+							i,
+						) as string;
+						const requestOptions = await createTwoFileMultipart(
+							i,
+							file1BinaryProperty,
+							file2BinaryProperty,
+							method,
+						);
+
+						const responseData = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'pdfapihubApi',
+							{
+								method: 'POST',
+								url: 'https://pdfapihub.com/api/v1/document/similarity',
+								...requestOptions,
+								returnFullResponse: true,
+							},
+						);
+
+						const responseBody = (responseData as { body?: unknown }).body;
+						if (typeof responseBody === 'string') {
+							try {
+								returnData.push({ json: JSON.parse(responseBody), pairedItem: { item: i } });
+							} catch {
+								returnData.push({ json: { raw: responseBody }, pairedItem: { item: i } });
+							}
+						} else if (Buffer.isBuffer(responseBody)) {
+							const text = responseBody.toString('utf8');
+							try {
+								returnData.push({ json: JSON.parse(text), pairedItem: { item: i } });
+							} catch {
+								returnData.push({ json: { raw: text }, pairedItem: { item: i } });
+							}
+						} else {
+							returnData.push({ json: (responseBody ?? {}) as IDataObject, pairedItem: { item: i } });
+						}
+					} else {
+						const body: Record<string, string> = {
+							method,
+						};
+
+						if (inputMode === 'url') {
+							body.url1 = normalizeUrl(this.getNodeParameter('doc_similarity_url1', i) as string);
+							body.url2 = normalizeUrl(this.getNodeParameter('doc_similarity_url2', i) as string);
+						} else {
+							body.image1_base64 = this.getNodeParameter('doc_similarity_base64_1', i) as string;
+							body.image2_base64 = this.getNodeParameter('doc_similarity_base64_2', i) as string;
+						}
+
+						const responseData = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'pdfapihubApi',
+							{
+								method: 'POST',
+								url: 'https://pdfapihub.com/api/v1/document/similarity',
+								body,
+								json: true,
+							},
+						);
+
+						returnData.push({ json: responseData as IDataObject, pairedItem: { item: i } });
 					}
 				}
 				// =====================================================
