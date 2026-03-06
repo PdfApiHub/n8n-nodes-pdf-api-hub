@@ -3,6 +3,36 @@
 	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
 	"categories": ["Documents", "Utilities"],
+	"subcategories": {
+		"Documents": ["PDF", "OCR", "Conversion"],
+		"Utilities": ["File Processing", "Screenshots"]
+	},
+	"alias": [
+		"HTML",
+		"PDF",
+		"PDF Tools",
+		"HTML to PDF",
+		"URL to PDF",
+		"Website to PDF",
+		"Screenshot",
+		"Website Screenshot",
+		"HTML to Image",
+		"URL to Image",
+		"Merge PDF",
+		"Split PDF",
+		"Compress PDF",
+		"Lock PDF",
+		"Unlock PDF",
+		"PDF Security",
+		"OCR",
+		"PDF OCR",
+		"Image OCR",
+		"PDF to Image",
+		"Image to PDF",
+		"DOCX to PDF",
+		"PDF to DOCX",
+		"Watermark"
+	],
 	"resources": {
 		"credentialDocumentation": [
 			{
