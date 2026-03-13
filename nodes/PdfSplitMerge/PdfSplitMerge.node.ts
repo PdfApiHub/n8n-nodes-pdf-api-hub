@@ -15,7 +15,7 @@ export class PdfSplitMerge implements INodeType {
 		group: ['transform'],
 		version: 1,
 		description:
-			'PDF and image tools: merge/split/compress, OCR, convert, document similarity, lock/unlock, watermark, and URL/HTML processing.',
+			'OCR, HTML/URL to PDF, merge/split PDFs, compress files, convert formats, watermark, and lock/unlock documents. Complete PDF & image processing toolkit.',
 		defaults: {
 			name: 'PDF API Hub',
 		},

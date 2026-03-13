@@ -31,7 +31,12 @@
 		"Image to PDF",
 		"DOCX to PDF",
 		"PDF to DOCX",
-		"Watermark"
+		"Watermark",
+		"Convert",
+		"Format Conversion",
+		"HTML2PDF",
+		"Convert HTML to PDF",
+		"Combine PDF"
 	],
 	"resources": {
 		"credentialDocumentation": [
