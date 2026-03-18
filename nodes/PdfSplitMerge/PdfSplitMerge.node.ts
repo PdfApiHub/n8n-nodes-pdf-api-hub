@@ -36,6 +36,31 @@ export class PdfSplitMerge implements INodeType {
 				noDataExpression: true,
 				options: [
 					{
+						name: 'Capture HTML to PDF',
+						value: 'pdfCreation',
+						description: 'Capture a website screenshot to PDF or render HTML/CSS to PDF',
+					},
+					{
+						name: 'Capture URL to PDF',
+						value: 'urlToHtml',
+						description: 'Fetch HTML content from a URL',
+					},
+					{
+						name: 'Convert Images to PDF',
+						value: 'imageToPdf',
+						description: 'Convert images (PNG, WebP, JPG) to PDF',
+					},
+					{
+						name: 'Convert PDF to Image',
+						value: 'pdfToImage',
+						description: 'Convert PDF pages to images (PNG, WebP)',
+					},
+					{
+						name: 'Create Image From HTML / Website',
+						value: 'imageGeneration',
+						description: 'Capture a website screenshot to image or render HTML/CSS to image',
+					},
+					{
 						name: 'Document Conversion',
 						value: 'documentConversion',
 						description: 'Convert DOCX/Office documents to PDF and PDF to DOCX',
@@ -46,56 +71,31 @@ export class PdfSplitMerge implements INodeType {
 						description: 'Compare similarity between two image/PDF documents',
 					},
 					{
-						name: 'Image to PDF',
-						value: 'imageToPdf',
-						description: 'Convert images (PNG, WebP, JPG) to PDF',
-					},
-					{
-						name: 'OCR to Searchable Text (PDF/Image)',
+						name: 'Extract OCR Text (PDF/Image)',
 						value: 'ocrParsing',
 						description: 'Extract searchable text from scanned PDFs/images',
 					},
 					{
-						name: 'PDF Merge / Split / Compress',
-						value: 'pdfManipulation',
-						description: 'Merge, split, or compress PDF documents',
-					},
-					{
-						name: 'PDF Parse / Extract Text',
+						name: 'Extract PDF Text / Data',
 						value: 'pdfParsing',
 						description: 'Extract text or structured data from PDFs',
 					},
 					{
-						name: 'PDF Security (Lock / Unlock)',
+						name: 'Manage PDF (Merge / Split / Compress)',
+						value: 'pdfManipulation',
+						description: 'Merge, split, or compress PDF documents',
+					},
+					{
+						name: 'Protect PDF (Lock / Unlock)',
 						value: 'pdfSecurity',
 						description: 'Lock and unlock password-protected PDFs',
-					},
-					{
-						name: 'PDF to Image',
-						value: 'pdfToImage',
-						description: 'Convert PDF pages to images (PNG, WebP)',
-					},
-					{
-						name: 'URL to HTML',
-						value: 'urlToHtml',
-						description: 'Fetch HTML content from a URL',
 					},
 					{
 						name: 'Watermark PDF',
 						value: 'watermark',
 						description: 'Add watermark to PDF or image',
-					},
-					{
-						name: 'Website / HTML to Image',
-						value: 'imageGeneration',
-						description: 'Capture a website screenshot to image or render HTML/CSS to image',
-					},
-					{
-						name: 'Website / HTML to PDF',
-						value: 'pdfCreation',
-						description: 'Capture a website screenshot to PDF or render HTML/CSS to PDF',
-					},
-				],
+					}
+					],
 				default: 'pdfParsing',
 			},
 			// PDF Creation Operations
