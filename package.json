@@ -45,7 +45,7 @@
 			"dist/credentials/PdfapihubApi.credentials.js"
 		],
 		"nodes": [
-			"dist/nodes/PdfSplitMerge/PdfSplitMerge.node.js"
+			"dist/nodes/Pdf/Pdf.node.js"
 		]
 	},
 	"devDependencies": {
