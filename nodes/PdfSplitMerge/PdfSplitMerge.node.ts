@@ -10,7 +10,7 @@ import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 export class PdfSplitMerge implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'PDF API Hub',
-		name: 'pdf',
+		name: 'pdfSplitMerge',
 		icon: { light: 'file:../../icons/pdfhub.light.svg', dark: 'file:../../icons/pdfhub.dark.svg' },
 		group: ['transform'],
 		version: 1,
