@@ -1,0 +1,380 @@
+import type { INodeProperties } from 'n8n-workflow';
+
+export const resourceProperty: INodeProperties = {
+		displayName: 'Resource',
+		name: 'resource',
+		type: 'options',
+		noDataExpression: true,
+		options: [
+			{
+				name: 'Capture HTML to PDF',
+				value: 'pdfCreation',
+				description: 'Capture a website screenshot to PDF or render HTML/CSS to PDF',
+			},
+			{
+				name: 'Capture URL to PDF',
+				value: 'urlToHtml',
+				description: 'Fetch HTML content from a URL',
+			},
+			{
+				name: 'Convert Images to PDF',
+				value: 'imageToPdf',
+				description: 'Convert images (PNG, WebP, JPG) to PDF',
+			},
+			{
+				name: 'Convert PDF to Image',
+				value: 'pdfToImage',
+				description: 'Convert PDF pages to images (PNG, WebP)',
+			},
+			{
+				name: 'Create Image From HTML / Website',
+				value: 'imageGeneration',
+				description: 'Capture a website screenshot to image or render HTML/CSS to image',
+			},
+			{
+				name: 'Document Conversion',
+				value: 'documentConversion',
+				description: 'Convert DOCX/Office documents to PDF and PDF to DOCX',
+			},
+			{
+				name: 'Document Intelligence',
+				value: 'documentIntelligence',
+				description: 'Compare similarity between two image/PDF documents',
+			},
+			{
+				name: 'Extract OCR Text (PDF/Image)',
+				value: 'ocrParsing',
+				description: 'Extract searchable text from scanned PDFs/images',
+			},
+			{
+				name: 'Extract PDF Text / Data',
+				value: 'pdfParsing',
+				description: 'Extract text or structured data from PDFs',
+			},
+			{
+				name: 'Manage PDF (Merge / Split / Compress)',
+				value: 'pdfManipulation',
+				description: 'Merge, split, or compress PDF documents',
+			},
+			{
+				name: 'Protect PDF (Lock / Unlock)',
+				value: 'pdfSecurity',
+				description: 'Lock and unlock password-protected PDFs',
+			},
+			{
+				name: 'Watermark PDF',
+				value: 'watermark',
+				description: 'Add watermark to PDF or image',
+			}
+			],
+		default: 'pdfParsing',
+	};
+
+export const operationProperties: INodeProperties[] = [
+{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['pdfCreation'],
+			},
+		},
+		options: [
+			{
+				name: 'URL to PDF',
+				value: 'urlToPdf',
+				description: 'Capture website screenshot to PDF',
+				action: 'Capture a screenshot of a website in PDF format',
+			},
+			{
+				name: 'HTML to PDF',
+				value: 'htmlToPdf',
+				description: 'Generate PDF from HTML/CSS',
+				action: 'Convert HTML to PDF',
+			},
+		],
+		default: 'urlToPdf',
+	},
+{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['imageGeneration'],
+			},
+		},
+		options: [
+			{
+				name: 'URL to Image',
+				value: 'urlToImage',
+				description: 'Capture website screenshot as image',
+				action: 'Capture a screenshot of a website as an image',
+			},
+			{
+				name: 'HTML to Image',
+				value: 'htmlToImage',
+				description: 'Generate image from HTML/CSS',
+				action: 'Convert HTML to image',
+			},
+		],
+		default: 'urlToImage',
+	},
+{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['ocrParsing'],
+			},
+		},
+		options: [
+			{
+				name: 'PDF OCR Parse',
+				value: 'pdfOcrParse',
+				description: 'Parse text from PDFs, including scanned pages',
+				action: 'Parse text from scanned PDF images',
+			},
+			{
+				name: 'Image OCR Parse',
+				value: 'imageOcrParse',
+				description: 'Extract text from image using OCR',
+				action: 'Parse text from images',
+			},
+		],
+		default: 'pdfOcrParse',
+	},
+{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['imageToPdf'],
+			},
+		},
+		options: [
+			{
+				name: 'PNG to PDF',
+				value: 'pngToPdf',
+				description: 'Convert PNG image(s) to PDF',
+				action: 'Convert PNG images to PDF',
+			},
+			{
+				name: 'WebP to PDF',
+				value: 'webpToPdf',
+				description: 'Convert WebP image(s) to PDF',
+				action: 'Convert webp images to PDF',
+			},
+			{
+				name: 'JPG to PDF',
+				value: 'jpgToPdf',
+				description: 'Convert JPG image(s) to PDF',
+				action: 'Convert JPG images to PDF',
+			},
+		],
+		default: 'pngToPdf',
+	},
+{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['documentConversion'],
+			},
+		},
+		options: [
+			{
+				name: 'DOCX / Document to PDF',
+				value: 'docxToPdf',
+				description: 'Convert Office-like documents (DOCX, PPTX, XLSX, etc.) to PDF',
+				action: 'Convert a document to PDF',
+			},
+			{
+				name: 'PDF to DOCX',
+				value: 'pdfToDocx',
+				description: 'Convert PDF to DOCX',
+				action: 'Convert a pdf to docx',
+			},
+		],
+		default: 'docxToPdf',
+	},
+{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['documentIntelligence'],
+			},
+		},
+		options: [
+			{
+				name: 'Similarity Check',
+				value: 'documentSimilarity',
+				description: 'Compare similarity between two images/PDF documents',
+				action: 'Compare similarity between two documents',
+			},
+		],
+		default: 'documentSimilarity',
+	},
+{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['pdfToImage'],
+			},
+		},
+		options: [
+			{
+				name: 'PDF to PNG',
+				value: 'pdfToPng',
+				description: 'Convert PDF pages to PNG images',
+				action: 'Convert PDF to PNG images',
+			},
+			{
+				name: 'PDF to WebP',
+				value: 'pdfToWebp',
+				description: 'Convert PDF pages to WebP images',
+				action: 'Convert pdf to webp images',
+			},
+			{
+				name: 'PDF to JPG',
+				value: 'pdfToJpg',
+				description: 'Convert PDF pages to JPG images',
+				action: 'Convert PDF to JPG images',
+			},
+		],
+		default: 'pdfToPng',
+	},
+{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['urlToHtml'],
+			},
+		},
+		options: [
+			{
+				name: 'Fetch HTML',
+				value: 'fetchHtml',
+				description: 'Fetch HTML content from a URL',
+				action: 'Fetch HTML content from a URL',
+			},
+		],
+		default: 'fetchHtml',
+	},
+{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['watermark'],
+			},
+		},
+		options: [
+			{
+				name: 'Add Watermark',
+				value: 'addWatermark',
+				description: 'Add diagonal text watermark to PDF or image',
+				action: 'Add watermark to PDF or image',
+			},
+		],
+		default: 'addWatermark',
+	},
+{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['pdfManipulation'],
+			},
+		},
+		options: [
+			{
+				name: 'Merge PDF',
+				value: 'mergePdf',
+				description: 'Merge multiple PDFs into a single PDF',
+				action: 'Merge multiple pdfs into a single pdf',
+			},
+			{
+				name: 'Split PDF',
+				value: 'splitPdf',
+				description: 'Split a PDF into multiple files',
+				action: 'Split a PDF into multiple files',
+			},
+			{
+				name: 'Compress PDF',
+				value: 'compressPdf',
+				description: 'Compress a PDF to reduce file size',
+				action: 'Reduce size of pdf file',
+			},
+		],
+		default: 'mergePdf',
+	},
+{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['pdfSecurity'],
+			},
+		},
+		options: [
+			{
+				name: 'Lock PDF',
+				value: 'lockPdf',
+				description: 'Add password protection to a PDF',
+				action: 'Password protect a pdf file',
+			},
+			{
+				name: 'Unlock PDF',
+				value: 'unlockPdf',
+				description: 'Remove password protection from a PDF',
+				action: 'Remove password protection from PDF',
+			},
+		],
+		default: 'lockPdf',
+	},
+{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['pdfParsing'],
+			},
+		},
+		options: [
+			{
+				name: 'Extract Text / Parse PDF',
+				value: 'parsePdf',
+				description: 'Extract text or structured data from a PDF',
+				action: 'Parse PDF to JSON',
+			},
+		],
+		default: 'parsePdf',
+	},
+];
