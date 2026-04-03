@@ -28,7 +28,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		default: '',
 		description: 'Public URL of the source document',
-		placeholder: 'https://example.com/sample.docx',
+		placeholder: 'https://pdfapihub.com/sample.docx',
 		displayOptions: {
 			show: {
 				operation: ['docxToPdf'],

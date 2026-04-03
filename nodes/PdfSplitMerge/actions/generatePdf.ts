@@ -49,7 +49,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		default: '',
 		required: true,
-		placeholder: 'https://example.com',
+		placeholder: 'https://pdfapihub.com/sample.pdf',
 		description: 'Full URL of the webpage to capture as PDF (https:// is added automatically if omitted)',
 		displayOptions: { show: { operation: ['urlToPdf'] } },
 	},

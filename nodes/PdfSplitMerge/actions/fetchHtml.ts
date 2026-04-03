@@ -17,7 +17,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		default: '',
 		required: true,
-		placeholder: 'https://example.com',
+		placeholder: 'https://pdfapihub.com',
 		description: 'The webpage to fetch rendered HTML from. https:// is added automatically if omitted. Great for scraping JS-rendered or SPA pages.',
 		displayOptions: { show: { operation: ['fetchHtml'] } },
 	},
