@@ -88,6 +88,50 @@ export const description: INodeProperties[] = [
 		description: 'Filename for the merged PDF – .pdf is appended automatically if omitted',
 		displayOptions: { show: { operation: ['mergePdf'] } },
 	},
+
+	// ─── 3. Advanced Options ─────────────────────────────────────────
+	{
+		displayName: 'Advanced Options',
+		name: 'mergeAdvancedOptions',
+		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
+		displayOptions: { show: { operation: ['mergePdf'] } },
+		options: [
+			{
+				displayName: 'PDF Title',
+				name: 'meta_title',
+				type: 'string',
+				default: '',
+				placeholder: 'Annual Report 2026',
+				description: 'Title embedded in the PDF metadata (visible in PDF viewers)',
+			},
+			{
+				displayName: 'PDF Author',
+				name: 'meta_author',
+				type: 'string',
+				default: '',
+				placeholder: 'Acme Corp',
+				description: 'Author name embedded in the PDF metadata',
+			},
+			{
+				displayName: 'PDF Subject',
+				name: 'meta_subject',
+				type: 'string',
+				default: '',
+				placeholder: 'Financials',
+				description: 'Subject line embedded in the PDF metadata',
+			},
+			{
+				displayName: 'PDF Keywords',
+				name: 'meta_keywords',
+				type: 'string',
+				default: '',
+				placeholder: 'report, annual, 2026',
+				description: 'Comma-separated keywords embedded in the PDF metadata (helps with search)',
+			},
+		],
+	},
 ];
 
 /* ================================================================
@@ -103,12 +147,21 @@ export async function execute(
 	const mergeInputType = this.getNodeParameter('merge_input_type', index) as string;
 	const outputFilename = this.getNodeParameter('merge_output_filename', index, 'merged.pdf') as string;
 
+	// ── Metadata (from Advanced Options) ───────────────────────────────
+	const advanced = this.getNodeParameter('mergeAdvancedOptions', index, {}) as Record<string, unknown>;
+	const metadata: Record<string, string> = {};
+	if (advanced.meta_title) metadata.title = advanced.meta_title as string;
+	if (advanced.meta_author) metadata.author = advanced.meta_author as string;
+	if (advanced.meta_subject) metadata.subject = advanced.meta_subject as string;
+	if (advanced.meta_keywords) metadata.keywords = advanced.meta_keywords as string;
+
 	const isFileInput = mergeInputType === 'file';
-	const body = !isFileInput
+	const body: Record<string, unknown> | undefined = !isFileInput
 		? {
 				urls: (this.getNodeParameter('urls', index) as string[]).map(normalizeUrl),
 				output,
 				output_filename: outputFilename,
+				...(Object.keys(metadata).length ? { metadata } : {}),
 			}
 		: undefined;
 
@@ -156,8 +209,12 @@ export async function execute(
 			parts.push(Buffer.from('\r\n'));
 		}
 
-		// Append output + output_filename fields
-		for (const [key, value] of Object.entries({ output, output_filename: outputFilename })) {
+		// Append output + output_filename + metadata fields
+		const formFields: Record<string, string> = { output, output_filename: outputFilename };
+		if (Object.keys(metadata).length) {
+			formFields.metadata = JSON.stringify(metadata);
+		}
+		for (const [key, value] of Object.entries(formFields)) {
 			parts.push(
 				Buffer.from(
 					`--${multipartBoundary}\r\n` +
