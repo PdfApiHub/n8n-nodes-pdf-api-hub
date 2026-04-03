@@ -12,9 +12,9 @@ export const resourceProperty: INodeProperties = {
 				description: 'Capture a website screenshot to PDF or render HTML/CSS to PDF',
 			},
 			{
-				name: 'Fetch Rendered HTML',
+				name: 'Scrape Website HTML',
 				value: 'urlToHtml',
-				description: 'Fetch the fully-rendered HTML of any webpage (great for JS-heavy or SPA pages)',
+				description: 'Scrape the fully-rendered HTML of any webpage using a headless browser (great for JS-heavy or SPA pages)',
 			},
 			{
 				name: 'Convert Images to PDF',
