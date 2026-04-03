@@ -3,7 +3,7 @@ import type {
 	INodeExecutionData,
 	INodeProperties,
 } from 'n8n-workflow';
-import { normalizeUrl } from '../helpers';
+import { normalizeUrl, throwApiError } from '../helpers';
 
 /* ================================================================
  *  Field descriptions – URL → rendered HTML
@@ -219,16 +219,20 @@ export async function execute(
 	if (Object.keys(headers).length) body.headers = headers;
 
 	// ── API call ────────────────────────────────────────────────────
-	const responseData = await this.helpers.httpRequestWithAuthentication.call(
-		this,
-		'pdfapihubApi',
-		{
-			method: 'POST',
-			url: 'https://pdfapihub.com/api/v1/url-to-html',
-			body,
-			json: true,
-			timeout: timeout + 15000, // HTTP ceiling = nav timeout + buffer
-		},
-	);
-	returnData.push({ json: responseData, pairedItem: { item: index } });
+	try {
+		const responseData = await this.helpers.httpRequestWithAuthentication.call(
+			this,
+			'pdfapihubApi',
+			{
+				method: 'POST',
+				url: 'https://pdfapihub.com/api/v1/url-to-html',
+				body,
+				json: true,
+				timeout: timeout + 15000,
+			},
+		);
+		returnData.push({ json: responseData, pairedItem: { item: index } });
+	} catch (error) {
+		throwApiError(this, error, index);
+	}
 }

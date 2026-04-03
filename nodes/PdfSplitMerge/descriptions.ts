@@ -12,9 +12,9 @@ export const resourceProperty: INodeProperties = {
 				description: 'Capture a website screenshot to PDF or render HTML/CSS to PDF',
 			},
 			{
-				name: 'Capture URL to PDF',
+				name: 'Fetch Rendered HTML',
 				value: 'urlToHtml',
-				description: 'Fetch HTML content from a URL',
+				description: 'Fetch the fully-rendered HTML of any webpage (great for JS-heavy or SPA pages)',
 			},
 			{
 				name: 'Convert Images to PDF',
@@ -273,8 +273,8 @@ export const operationProperties: INodeProperties[] = [
 			{
 				name: 'Fetch HTML',
 				value: 'fetchHtml',
-				description: 'Fetch HTML content from a URL',
-				action: 'Fetch HTML content from a URL',
+				description: 'Navigate to a URL and return the fully-rendered HTML',
+				action: 'Fetch rendered HTML from a URL',
 			},
 		],
 		default: 'fetchHtml',

@@ -1,4 +1,71 @@
 import type { IExecuteFunctions, IDataObject, INodeExecutionData } from 'n8n-workflow';
+import { NodeApiError } from 'n8n-workflow';
+
+/**
+ * Extract a human-readable error message from an API error response.
+ * n8n's httpRequestWithAuthentication throws generic HTTP errors;
+ * this helper digs into the response body to surface the real API message.
+ */
+export function throwApiError(context: IExecuteFunctions, error: unknown, itemIndex: number): never {
+	const err = error as Record<string, unknown>;
+
+	// Try to extract the API's JSON error body
+	let apiMessage: string | undefined;
+	let responseBody: Record<string, unknown> | undefined;
+
+	// n8n attaches the response in different places depending on version
+	const candidates = [
+		err.response,
+		err.cause,
+		(err.cause as Record<string, unknown>)?.response,
+	];
+
+	for (const candidate of candidates) {
+		if (!candidate || typeof candidate !== 'object') continue;
+		const c = candidate as Record<string, unknown>;
+
+		// Try body.error (string)
+		const body = c.body ?? c.data;
+		if (body && typeof body === 'object') {
+			const b = body as Record<string, unknown>;
+			if (typeof b.error === 'string') {
+				apiMessage = b.error;
+				responseBody = b;
+				break;
+			}
+		}
+		if (typeof body === 'string') {
+			try {
+				const parsed = JSON.parse(body) as Record<string, unknown>;
+				if (typeof parsed.error === 'string') {
+					apiMessage = parsed.error;
+					responseBody = parsed;
+					break;
+				}
+			} catch { /* not JSON */ }
+		}
+	}
+
+	// Also check if the error itself has a description or message with JSON
+	if (!apiMessage && typeof err.message === 'string') {
+		try {
+			const parsed = JSON.parse(err.message) as Record<string, unknown>;
+			if (typeof parsed.error === 'string') {
+				apiMessage = parsed.error;
+				responseBody = parsed;
+			}
+		} catch { /* not JSON */ }
+	}
+
+	const message = apiMessage
+		?? (error instanceof Error ? error.message : 'Unknown API error');
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	throw new NodeApiError(context.getNode(), (responseBody ?? { error: message }) as any, {
+		message,
+		itemIndex,
+	});
+}
 
 /**
  * Normalize a URL string – add https:// if no protocol present.

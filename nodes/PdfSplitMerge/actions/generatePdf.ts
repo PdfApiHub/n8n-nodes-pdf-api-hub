@@ -3,7 +3,7 @@ import type {
 	INodeExecutionData,
 	INodeProperties,
 } from 'n8n-workflow';
-import { normalizeUrl, prepareBinaryResponse } from '../helpers';
+import { normalizeUrl, prepareBinaryResponse, throwApiError } from '../helpers';
 
 /* ================================================================
  *  Field descriptions – ordered for an intuitive top-to-bottom UX
@@ -446,6 +446,7 @@ export async function execute(
 	}
 
 	// ── API call ────────────────────────────────────────────────────
+	try {
 	if (outputFormat === 'file') {
 		// binary / pdf / file  →  raw arraybuffer
 		const responseData = await this.helpers.httpRequestWithAuthentication.call(
@@ -485,5 +486,8 @@ export async function execute(
 			},
 		);
 		returnData.push({ json: responseData, pairedItem: { item: index } });
+	}
+	} catch (error) {
+		throwApiError(this, error, index);
 	}
 }
