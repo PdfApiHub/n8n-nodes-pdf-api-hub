@@ -82,8 +82,8 @@ export const description: INodeProperties[] = [
 		displayName: 'Output Filename',
 		name: 'output_filename',
 		type: 'string',
-		default: 'document',
-		placeholder: 'my-report',
+		default: 'document.pdf',
+		placeholder: 'my-report.pdf',
 		description: 'Filename for the generated PDF – .pdf is appended automatically if omitted',
 		displayOptions: { show: { operation: ['htmlToPdf', 'urlToPdf'] } },
 	},
@@ -184,11 +184,35 @@ export const description: INodeProperties[] = [
 		displayOptions: { show: { operation: ['urlToPdf'] } },
 	},
 	{
-		displayName: 'Wait Time (Seconds)',
+		displayName: 'Cookie Accept Text',
+		name: 'cookie_accept_text',
+		type: 'string',
+		default: 'Accept ALL',
+		placeholder: 'Accept ALL',
+		description: 'Text of the cookie-consent button to auto-click before capture. The browser looks for a button containing this text and clicks it. Change this if the site uses different wording (e.g. "I Agree", "OK", "Got it").',
+		displayOptions: { show: { operation: ['urlToPdf'] } },
+	},
+	{
+		displayName: 'Wait Until',
+		name: 'wait_until',
+		type: 'options',
+		options: [
+			{ name: 'Fully Loaded (Default)', value: 'load', description: 'All resources (images, CSS, fonts) have finished loading' },
+			{ name: 'DOM Ready (Fast)', value: 'domcontentloaded', description: 'HTML is parsed — images & styles may still be loading' },
+			{ name: 'Network Quiet (Best for SPAs)', value: 'networkidle', description: 'No network activity for 500 ms — ideal for JS-heavy pages' },
+			{ name: 'First Response (Fastest)', value: 'commit', description: 'Capture as soon as the server starts responding' },
+		],
+		default: 'load',
+		description: 'When to consider the page loaded. The browser waits until this condition is met (or timeout is reached) before capturing.',
+		displayOptions: { show: { operation: ['urlToPdf'] } },
+	},
+	{
+		displayName: 'Navigation Timeout (Seconds)',
 		name: 'wait_till',
 		type: 'number',
-		default: 0,
-		description: 'Extra seconds to wait before capturing – useful for pages with animations or lazy-loaded content (0 = no extra wait)',
+		default: 30,
+		typeOptions: { minValue: 0 },
+		description: 'Maximum seconds the browser will wait for the page to meet the "Wait Until" condition. The page proceeds as soon as the condition is met — this is only a ceiling. Minimum enforced by the API is 30 seconds. Set to 0 to use the default (30s).',
 		displayOptions: { show: { operation: ['urlToPdf'] } },
 	},
 
@@ -311,12 +335,12 @@ export const description: INodeProperties[] = [
 				description: 'PDF rendering quality (1–100). Lower values produce smaller files.',
 			},
 			{
-				displayName: 'Request Timeout (Seconds)',
+				displayName: 'Max Wait / Timeout (Seconds)',
 				name: 'timeout',
 				type: 'number',
 				default: 120,
 				typeOptions: { minValue: 10 },
-				description: 'How long to wait for the API to respond before aborting. Increase only if you\'re generating very large or complex PDFs.',
+				description: 'Maximum time to wait for the API to respond. The request completes as soon as the PDF is ready \u2013 this is only a ceiling to prevent indefinite hangs.',
 			},
 		],
 	},
@@ -338,7 +362,10 @@ export async function execute(
 	// ── Page setup ──────────────────────────────────────────────────
 	const paperSize = this.getNodeParameter('paper_size', index, 'A4') as string;
 	const orientation = this.getNodeParameter('orientation', index, 'portrait') as string;
-	const marginPreset = this.getNodeParameter('margin_preset', index, 'small') as string;
+	// URL captures already have their own layout — default to no extra margins.
+	// HTML documents benefit from a bit of breathing room → default small.
+	const marginDefault = operation === 'urlToPdf' ? 'none' : 'small';
+	const marginPreset = this.getNodeParameter('margin_preset', index, marginDefault) as string;
 
 	const body: Record<string, unknown> = {
 		output_format: outputFormat,
@@ -423,7 +450,10 @@ export async function execute(
 		// urlToPdf
 		body.url = normalizeUrl(this.getNodeParameter('url_to_pdf', index) as string);
 		body.full_page = this.getNodeParameter('full_page', index, true) as boolean;
-		body.wait_till = this.getNodeParameter('wait_till', index, 0) as number;
+		const cookieText = this.getNodeParameter('cookie_accept_text', index, 'Accept ALL') as string;
+		if (cookieText) body.cookie_accept_text = cookieText;
+		body.wait_until = this.getNodeParameter('wait_until', index, 'load') as string;
+		body.wait_till = this.getNodeParameter('wait_till', index, 30) as number;
 	}
 
 	// ── API call ────────────────────────────────────────────────────
