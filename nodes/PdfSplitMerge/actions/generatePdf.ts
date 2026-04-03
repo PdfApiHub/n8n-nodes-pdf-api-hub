@@ -17,6 +17,7 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		typeOptions: { rows: 6 },
 		default: '',
+		required: true,
 		placeholder: '<html><body><h1>Hello World</h1></body></html>',
 		description: 'Full or partial HTML to render as PDF. Supports {{placeholder}} syntax when combined with Dynamic Params.',
 		displayOptions: { show: { operation: ['htmlToPdf'] } },
@@ -47,6 +48,7 @@ export const description: INodeProperties[] = [
 		name: 'url_to_pdf',
 		type: 'string',
 		default: '',
+		required: true,
 		placeholder: 'https://example.com',
 		description: 'Full URL of the webpage to capture as PDF (https:// is added automatically if omitted)',
 		displayOptions: { show: { operation: ['urlToPdf'] } },
@@ -206,15 +208,6 @@ export const description: INodeProperties[] = [
 		description: 'When to consider the page loaded. The browser waits until this condition is met (or timeout is reached) before capturing.',
 		displayOptions: { show: { operation: ['urlToPdf'] } },
 	},
-	{
-		displayName: 'Navigation Timeout (Seconds)',
-		name: 'wait_till',
-		type: 'number',
-		default: 30,
-		typeOptions: { minValue: 0 },
-		description: 'Maximum seconds the browser will wait for the page to meet the "Wait Until" condition. The page proceeds as soon as the condition is met — this is only a ceiling. Minimum enforced by the API is 30 seconds. Set to 0 to use the default (30s).',
-		displayOptions: { show: { operation: ['urlToPdf'] } },
-	},
 
 	// ─── 5. Viewport (both) ─────────────────────────────────────────
 	{
@@ -327,20 +320,12 @@ export const description: INodeProperties[] = [
 				description: 'Maximum number of pages to return (0 = unlimited, subject to your plan\'s page limit)',
 			},
 			{
-				displayName: 'Quality',
-				name: 'quality',
+				displayName: 'Navigation Timeout (Seconds)',
+				name: 'wait_till',
 				type: 'number',
-				default: 100,
-				typeOptions: { minValue: 1, maxValue: 100 },
-				description: 'PDF rendering quality (1–100). Lower values produce smaller files.',
-			},
-			{
-				displayName: 'Max Wait / Timeout (Seconds)',
-				name: 'timeout',
-				type: 'number',
-				default: 120,
-				typeOptions: { minValue: 10 },
-				description: 'Maximum time to wait for the API to respond. The request completes as soon as the PDF is ready \u2013 this is only a ceiling to prevent indefinite hangs.',
+				default: 30,
+				typeOptions: { minValue: 0 },
+				description: 'Maximum seconds the browser waits for the page to meet the "Wait Until" condition (URL-to-PDF only). Minimum enforced by the API is 30s. Set to 0 for the default.',
 			},
 		],
 	},
@@ -405,24 +390,28 @@ export async function execute(
 	// ── Advanced options (collection – may be empty) ────────────────
 	const advanced = this.getNodeParameter('advancedOptions', index, {}) as Record<string, unknown>;
 
-	// Backward compat: old workflows stored `timeout` as a top-level param.
-	// New workflows store it inside advancedOptions.  Try the old location
-	// first so existing saved values aren't silently lost.
-	let timeoutSeconds: number;
-	try {
-		timeoutSeconds = this.getNodeParameter('timeout', index) as number;
-	} catch {
-		timeoutSeconds = (advanced.timeout as number | undefined) ?? 120;
+	// Navigation timeout: read from advancedOptions first, then try legacy
+	// top-level locations (old workflows stored it as 'wait_till' or 'timeout').
+	let navTimeoutSec = advanced.wait_till as number | undefined;
+	if (navTimeoutSec === undefined) {
+		try {
+			navTimeoutSec = this.getNodeParameter('wait_till', index) as number;
+		} catch {
+			try {
+				navTimeoutSec = this.getNodeParameter('timeout', index) as number;
+			} catch {
+				navTimeoutSec = 30;
+			}
+		}
 	}
-	const timeout = timeoutSeconds * 1000;
-	body.print_background = advanced.print_background ?? true;
+	// HTTP request timeout = navigation timeout + generous buffer for PDF rendering
+	const timeout = (Math.max(navTimeoutSec, 30) + 90) * 1000;
+
+	body.print_background = advanced.print_background !== undefined ? advanced.print_background : true;
 	if (advanced.displayHeaderFooter) body.displayHeaderFooter = true;
 	if (advanced.preferCSSPageSize) body.preferCSSPageSize = true;
 	if (advanced.page_size && (advanced.page_size as number) > 0) {
 		body.page_size = advanced.page_size;
-	}
-	if (advanced.quality !== undefined && (advanced.quality as number) < 100) {
-		body.quality = advanced.quality;
 	}
 
 	// ── Source-specific fields ──────────────────────────────────────
@@ -453,7 +442,7 @@ export async function execute(
 		const cookieText = this.getNodeParameter('cookie_accept_text', index, 'Accept ALL') as string;
 		if (cookieText) body.cookie_accept_text = cookieText;
 		body.wait_until = this.getNodeParameter('wait_until', index, 'load') as string;
-		body.wait_till = this.getNodeParameter('wait_till', index, 30) as number;
+		body.wait_till = navTimeoutSec;
 	}
 
 	// ── API call ────────────────────────────────────────────────────
@@ -478,7 +467,7 @@ export async function execute(
 				this,
 				index,
 				responseData as { body: ArrayBuffer; headers?: Record<string, unknown> },
-				`${outputFilename}.pdf`,
+				outputFilename.endsWith('.pdf') ? outputFilename : `${outputFilename}.pdf`,
 				'application/pdf',
 			),
 		);
