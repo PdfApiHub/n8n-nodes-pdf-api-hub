@@ -1,99 +1,98 @@
-import type { IExecuteFunctions, INodeExecutionData,
+import type {
+	IExecuteFunctions,
+	INodeExecutionData,
 	INodeProperties,
 } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import { normalizeUrl, prepareBinaryResponse, parseJsonResponseBody } from '../helpers';
+import { normalizeUrl, prepareBinaryResponse, parseJsonResponseBody, checkApiResponse } from '../helpers';
 
+/* ================================================================
+ *  Field descriptions – Merge PDFs
+ * ================================================================ */
 
 export const description: INodeProperties[] = [
-{
+	// ─── 1. Input ───────────────────────────────────────────────────
+	{
 		displayName: 'Input Type',
 		name: 'merge_input_type',
 		type: 'options',
 		options: [
 			{
-				name: 'URL',
+				name: 'URL (Default)',
 				value: 'url',
-				description: 'Provide publicly accessible PDF URLs',
+				description: 'Provide publicly accessible PDF URLs (Google Drive links supported)',
 			},
 			{
-				name: 'File (Binary)',
+				name: 'Binary File',
 				value: 'file',
-				description: 'Upload PDF files from incoming binary data',
+				description: 'Use PDF files from a previous node\'s binary output',
 			},
 		],
 		default: 'url',
-		description: 'How to provide the PDFs to merge',
-		displayOptions: {
-			show: {
-				operation: ['mergePdf'],
-			},
-		},
+		description: 'How to provide the PDFs to merge (max 25 files)',
+		displayOptions: { show: { operation: ['mergePdf'] } },
 	},
-{
-		displayName: 'URLs',
+	{
+		displayName: 'PDF URLs',
 		name: 'urls',
 		type: 'string',
-		typeOptions: {
-			multipleValues: true,
-		},
+		typeOptions: { multipleValues: true },
 		default: [],
-		description: 'Array of PDF URLs to merge',
-		placeholder: 'https://pdfapihub.com/sample.pdf',
-		displayOptions: {
-			show: {
-				operation: ['mergePdf'],
-				merge_input_type: ['url'],
-			},
-		},
+		required: true,
+		placeholder: 'https://example.com/invoice.pdf',
+		description: 'PDF URLs to merge – they are combined in the order listed. Google Drive share links are auto-converted.',
+		displayOptions: { show: { operation: ['mergePdf'], merge_input_type: ['url'] } },
 	},
-{
+	{
 		displayName: 'Binary Property Names',
 		name: 'merge_files_binary_properties',
 		type: 'string',
-		typeOptions: {
-			multipleValues: true,
-		},
+		typeOptions: { multipleValues: true },
 		default: ['data'],
-		description:
-			'One or more binary property names that contain PDFs to merge (for example: "data"). Each entry should point to a PDF binary.',
-		displayOptions: {
-			show: {
-				operation: ['mergePdf'],
-				merge_input_type: ['file'],
-			},
-		},
+		description: 'Binary property names containing PDFs to merge (e.g. "data"). Files are combined in the order listed.',
+		displayOptions: { show: { operation: ['mergePdf'], merge_input_type: ['file'] } },
 	},
-{
+
+	// ─── 2. Output ──────────────────────────────────────────────────
+	{
 		displayName: 'Output Format',
 		name: 'output',
 		type: 'options',
 		options: [
 			{
-				name: 'URL',
+				name: 'URL (Hosted Link) (Default)',
 				value: 'url',
-				description: 'Return a URL to the merged PDF',
+				description: 'Returns a downloadable URL – file hosted for 30 days',
 			},
 			{
-				name: 'File',
-				value: 'file',
-				description: 'Download the merged PDF as a file',
-			},
-			{
-				name: 'Base64',
+				name: 'Base64 (Inline Data)',
 				value: 'base64',
-				description: 'Return the merged PDF as a Base64-encoded string',
+				description: 'Returns the merged PDF as a base64-encoded string inside JSON',
+			},
+			{
+				name: 'Binary File (Download)',
+				value: 'file',
+				description: 'Returns raw PDF binary – great for piping into other nodes',
 			},
 		],
 		default: 'url',
-		description: 'Whether to return a URL or download the file',
-		displayOptions: {
-			show: {
-				operation: ['mergePdf'],
-			},
-		},
+		description: 'How the merged PDF is returned',
+		displayOptions: { show: { operation: ['mergePdf'] } },
+	},
+	{
+		displayName: 'Output Filename',
+		name: 'merge_output_filename',
+		type: 'string',
+		default: 'merged.pdf',
+		placeholder: 'combined-report.pdf',
+		description: 'Filename for the merged PDF – .pdf is appended automatically if omitted',
+		displayOptions: { show: { operation: ['mergePdf'] } },
 	},
 ];
+
+/* ================================================================
+ *  Execute handler
+ * ================================================================ */
 
 export async function execute(
 	this: IExecuteFunctions,
@@ -102,12 +101,14 @@ export async function execute(
 ): Promise<void> {
 	const output = this.getNodeParameter('output', index) as string;
 	const mergeInputType = this.getNodeParameter('merge_input_type', index) as string;
+	const outputFilename = this.getNodeParameter('merge_output_filename', index, 'merged.pdf') as string;
 
 	const isFileInput = mergeInputType === 'file';
 	const body = !isFileInput
 		? {
 				urls: (this.getNodeParameter('urls', index) as string[]).map(normalizeUrl),
 				output,
+				output_filename: outputFilename,
 			}
 		: undefined;
 
@@ -155,17 +156,22 @@ export async function execute(
 			parts.push(Buffer.from('\r\n'));
 		}
 
-		parts.push(
-			Buffer.from(
-				`--${multipartBoundary}\r\n` +
-					'Content-Disposition: form-data; name="output"\r\n\r\n' +
-					`${output}\r\n`,
-			),
-		);
+		// Append output + output_filename fields
+		for (const [key, value] of Object.entries({ output, output_filename: outputFilename })) {
+			parts.push(
+				Buffer.from(
+					`--${multipartBoundary}\r\n` +
+						`Content-Disposition: form-data; name="${key}"\r\n\r\n` +
+						`${value}\r\n`,
+				),
+			);
+		}
 		parts.push(Buffer.from(`--${multipartBoundary}--\r\n`));
 
 		multipartBody = Buffer.concat(parts);
 	}
+
+	const safeName = outputFilename.endsWith('.pdf') ? outputFilename : `${outputFilename}.pdf`;
 
 	if (output === 'file') {
 		const responseData = await this.helpers.httpRequestWithAuthentication.call(
@@ -184,15 +190,22 @@ export async function execute(
 					: { body, json: true }),
 				encoding: 'arraybuffer',
 				returnFullResponse: true,
+				ignoreHttpStatusErrors: true,
 			},
-		);
+		) as { body: ArrayBuffer; statusCode: number; headers?: Record<string, unknown> };
+
+		if (responseData.statusCode >= 400) {
+			let errorBody: unknown;
+			try { errorBody = JSON.parse(Buffer.from(responseData.body).toString('utf8')); } catch { errorBody = {}; }
+			checkApiResponse(this, responseData.statusCode, errorBody, index);
+		}
 
 		returnData.push(
 			await prepareBinaryResponse.call(
 				this,
 				index,
-				responseData as { body: ArrayBuffer; headers?: Record<string, unknown> },
-				'merged.pdf',
+				responseData,
+				safeName,
 				'application/pdf',
 			),
 		);
@@ -212,10 +225,11 @@ export async function execute(
 						}
 					: { body, json: true }),
 				returnFullResponse: true,
+				ignoreHttpStatusErrors: true,
 			},
-		);
+		) as { body: unknown; statusCode: number };
 
-		const responseBody = (responseData as { body?: unknown }).body;
-		returnData.push(parseJsonResponseBody(responseBody, index));
+		checkApiResponse(this, responseData.statusCode, responseData.body, index);
+		returnData.push(parseJsonResponseBody(responseData.body, index));
 	}
 }

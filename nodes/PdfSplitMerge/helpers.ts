@@ -2,67 +2,41 @@ import type { IExecuteFunctions, IDataObject, INodeExecutionData } from 'n8n-wor
 import { NodeApiError } from 'n8n-workflow';
 
 /**
- * Extract a human-readable error message from an API error response.
- * n8n's httpRequestWithAuthentication throws generic HTTP errors;
- * this helper digs into the response body to surface the real API message.
+ * Check an API JSON response for errors and throw a clear NodeApiError
+ * if the API reported failure. Call this after using `ignoreHttpStatusErrors: true`.
  */
-export function throwApiError(context: IExecuteFunctions, error: unknown, itemIndex: number): never {
-	const err = error as Record<string, unknown>;
+export function checkApiResponse(
+	context: IExecuteFunctions,
+	statusCode: number,
+	responseBody: unknown,
+	itemIndex: number,
+): void {
+	// 2xx → success
+	if (statusCode >= 200 && statusCode < 300) return;
 
-	// Try to extract the API's JSON error body
-	let apiMessage: string | undefined;
-	let responseBody: Record<string, unknown> | undefined;
+	// Try to pull the error message from the response body
+	let apiMessage = `API request failed with status ${statusCode}`;
+	let bodyObj: Record<string, unknown> = {};
 
-	// n8n attaches the response in different places depending on version
-	const candidates = [
-		err.response,
-		err.cause,
-		(err.cause as Record<string, unknown>)?.response,
-	];
-
-	for (const candidate of candidates) {
-		if (!candidate || typeof candidate !== 'object') continue;
-		const c = candidate as Record<string, unknown>;
-
-		// Try body.error (string)
-		const body = c.body ?? c.data;
-		if (body && typeof body === 'object') {
-			const b = body as Record<string, unknown>;
-			if (typeof b.error === 'string') {
-				apiMessage = b.error;
-				responseBody = b;
-				break;
-			}
+	if (responseBody && typeof responseBody === 'object') {
+		bodyObj = responseBody as Record<string, unknown>;
+		if (typeof bodyObj.error === 'string') {
+			apiMessage = bodyObj.error;
 		}
-		if (typeof body === 'string') {
-			try {
-				const parsed = JSON.parse(body) as Record<string, unknown>;
-				if (typeof parsed.error === 'string') {
-					apiMessage = parsed.error;
-					responseBody = parsed;
-					break;
-				}
-			} catch { /* not JSON */ }
-		}
-	}
-
-	// Also check if the error itself has a description or message with JSON
-	if (!apiMessage && typeof err.message === 'string') {
+	} else if (typeof responseBody === 'string') {
 		try {
-			const parsed = JSON.parse(err.message) as Record<string, unknown>;
+			const parsed = JSON.parse(responseBody) as Record<string, unknown>;
 			if (typeof parsed.error === 'string') {
 				apiMessage = parsed.error;
-				responseBody = parsed;
+				bodyObj = parsed;
 			}
 		} catch { /* not JSON */ }
 	}
 
-	const message = apiMessage
-		?? (error instanceof Error ? error.message : 'Unknown API error');
-
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	throw new NodeApiError(context.getNode(), (responseBody ?? { error: message }) as any, {
-		message,
+	throw new NodeApiError(context.getNode(), bodyObj as any, {
+		message: apiMessage,
+		httpCode: String(statusCode),
 		itemIndex,
 	});
 }

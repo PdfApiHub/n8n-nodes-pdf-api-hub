@@ -1,5 +1,5 @@
 import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
-import { NodeOperationError } from 'n8n-workflow';
+import { NodeOperationError, NodeApiError } from 'n8n-workflow';
 
 import * as generatePdf from './generatePdf';
 import * as mergePdf from './mergePdf';
@@ -133,6 +133,9 @@ export async function executePdfSplitMerge(
 			if (this.continueOnFail()) {
 				const message = error instanceof Error ? error.message : 'Unknown error';
 				returnData.push({ json: { error: message }, pairedItem: { item: i } });
+			} else if (error instanceof NodeApiError) {
+				// Already a well-formatted API error — re-throw as-is
+				throw error;
 			} else {
 				throw new NodeOperationError(this.getNode(), error, { itemIndex: i });
 			}

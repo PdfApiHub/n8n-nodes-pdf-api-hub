@@ -3,7 +3,7 @@ import type {
 	INodeExecutionData,
 	INodeProperties,
 } from 'n8n-workflow';
-import { normalizeUrl, prepareBinaryResponse, throwApiError } from '../helpers';
+import { normalizeUrl, prepareBinaryResponse, checkApiResponse } from '../helpers';
 
 /* ================================================================
  *  Field descriptions – ordered for an intuitive top-to-bottom UX
@@ -446,7 +446,6 @@ export async function execute(
 	}
 
 	// ── API call ────────────────────────────────────────────────────
-	try {
 	if (outputFormat === 'file') {
 		// binary / pdf / file  →  raw arraybuffer
 		const responseData = await this.helpers.httpRequestWithAuthentication.call(
@@ -459,15 +458,25 @@ export async function execute(
 				json: true,
 				encoding: 'arraybuffer',
 				returnFullResponse: true,
+				ignoreHttpStatusErrors: true,
 				timeout,
 			},
-		);
+		) as { body: ArrayBuffer; statusCode: number; headers?: Record<string, unknown> };
+
+		// Check for error — arraybuffer may contain JSON error body
+		if (responseData.statusCode >= 400) {
+			let errorBody: unknown;
+			try {
+				errorBody = JSON.parse(Buffer.from(responseData.body).toString('utf8'));
+			} catch { errorBody = {}; }
+			checkApiResponse(this, responseData.statusCode, errorBody, index);
+		}
 
 		returnData.push(
 			await prepareBinaryResponse.call(
 				this,
 				index,
-				responseData as { body: ArrayBuffer; headers?: Record<string, unknown> },
+				responseData,
 				outputFilename.endsWith('.pdf') ? outputFilename : `${outputFilename}.pdf`,
 				'application/pdf',
 			),
@@ -482,12 +491,13 @@ export async function execute(
 				url: 'https://pdfapihub.com/api/v1/generatePdf',
 				body,
 				json: true,
+				returnFullResponse: true,
+				ignoreHttpStatusErrors: true,
 				timeout,
 			},
-		);
-		returnData.push({ json: responseData, pairedItem: { item: index } });
-	}
-	} catch (error) {
-		throwApiError(this, error, index);
+		) as { body: Record<string, unknown>; statusCode: number };
+
+		checkApiResponse(this, responseData.statusCode, responseData.body, index);
+		returnData.push({ json: responseData.body as import('n8n-workflow').IDataObject, pairedItem: { item: index } });
 	}
 }

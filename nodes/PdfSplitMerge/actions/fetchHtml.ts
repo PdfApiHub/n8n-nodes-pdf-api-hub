@@ -3,7 +3,7 @@ import type {
 	INodeExecutionData,
 	INodeProperties,
 } from 'n8n-workflow';
-import { normalizeUrl, throwApiError } from '../helpers';
+import { normalizeUrl, checkApiResponse } from '../helpers';
 
 /* ================================================================
  *  Field descriptions – URL → rendered HTML
@@ -219,20 +219,20 @@ export async function execute(
 	if (Object.keys(headers).length) body.headers = headers;
 
 	// ── API call ────────────────────────────────────────────────────
-	try {
-		const responseData = await this.helpers.httpRequestWithAuthentication.call(
-			this,
-			'pdfapihubApi',
-			{
-				method: 'POST',
-				url: 'https://pdfapihub.com/api/v1/url-to-html',
-				body,
-				json: true,
-				timeout: timeout + 15000,
-			},
-		);
-		returnData.push({ json: responseData, pairedItem: { item: index } });
-	} catch (error) {
-		throwApiError(this, error, index);
-	}
+	const responseData = await this.helpers.httpRequestWithAuthentication.call(
+		this,
+		'pdfapihubApi',
+		{
+			method: 'POST',
+			url: 'https://pdfapihub.com/api/v1/url-to-html',
+			body,
+			json: true,
+			returnFullResponse: true,
+			ignoreHttpStatusErrors: true,
+			timeout: timeout + 15000,
+		},
+	) as { body: Record<string, unknown>; statusCode: number };
+
+	checkApiResponse(this, responseData.statusCode, responseData.body, index);
+	returnData.push({ json: responseData.body as import('n8n-workflow').IDataObject, pairedItem: { item: index } });
 }
