@@ -18,6 +18,7 @@ import * as pdfToDocx from './pdfToDocx';
 import * as pdfToImage from './pdfToImage';
 import * as fetchHtml from './fetchHtml';
 import * as addWatermark from './addWatermark';
+import * as signPdf from './signPdf';
 import * as pdfToFormat from './pdfToFormat';
 
 /**
@@ -59,6 +60,7 @@ export const allActionDescriptions: INodeProperties[] = [
 	...pdfToImage.description,
 	...splitPdf.description,
 	...unlockPdf.description,
+	...signPdf.description,
 ];
 
 const actionMap: Record<string, ActionHandler> = {
@@ -113,8 +115,9 @@ const actionMap: Record<string, ActionHandler> = {
 	// URL to HTML
 	fetchHtml: fetchHtml.execute as ActionHandler,
 
-	// Watermark
+	// Watermark & Sign
 	addWatermark: addWatermark.execute as ActionHandler,
+	signPdf: signPdf.execute as ActionHandler,
 };
 
 /**

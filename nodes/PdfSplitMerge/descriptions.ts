@@ -62,9 +62,9 @@ export const resourceProperty: INodeProperties = {
 				description: 'Lock and unlock password-protected PDFs',
 			},
 			{
-				name: 'Watermark PDF',
+				name: 'Watermark & Sign PDF',
 				value: 'watermark',
-				description: 'Add watermark to PDF or image',
+				description: 'Add text/image watermarks or stamp signatures onto PDFs and images',
 			}
 			],
 		default: 'pdfParsing',
@@ -323,8 +323,14 @@ export const operationProperties: INodeProperties[] = [
 			{
 				name: 'Add Watermark',
 				value: 'addWatermark',
-				description: 'Add diagonal text watermark to PDF or image',
+				description: 'Add text or image watermark to every page of a PDF or image',
 				action: 'Add watermark to PDF or image',
+			},
+			{
+				name: 'Sign PDF',
+				value: 'signPdf',
+				description: 'Stamp a signature image onto one or all pages of a PDF',
+				action: 'Sign a PDF with a signature image',
 			},
 		],
 		default: 'addWatermark',
