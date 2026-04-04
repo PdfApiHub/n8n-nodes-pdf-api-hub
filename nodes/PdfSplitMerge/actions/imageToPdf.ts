@@ -12,7 +12,7 @@ export const description: INodeProperties[] = [
 		type: 'options',
 		options: [
 			{ name: 'URL(s) (Default)', value: 'url' },
-			{ name: 'Base64', value: 'base64' },
+			{ name: 'Base64 (Inline Data)', value: 'base64', description: 'Returns base64-encoded data inside JSON' },
 			{ name: 'File (Binary)', value: 'file' },
 		],
 		default: 'url',
@@ -185,10 +185,10 @@ export const description: INodeProperties[] = [
 		name: 'img2pdf_output',
 		type: 'options',
 		options: [
-			{ name: 'URL (Default)', value: 'url' },
-			{ name: 'Base64', value: 'base64' },
-			{ name: 'Both', value: 'both' },
-			{ name: 'File', value: 'file' },
+			{ name: 'URL (Hosted Link) (Default)', value: 'url', description: 'Returns a downloadable URL — file hosted for 30 days' },
+			{ name: 'Base64 (Inline Data)', value: 'base64', description: 'Returns base64-encoded data inside JSON' },
+			{ name: 'Both (URL + Base64)', value: 'both', description: 'Returns both URL and base64 in one response' },
+			{ name: 'Binary File (Download)', value: 'file', description: 'Returns raw binary — great for piping into other nodes' },
 		],
 		default: 'url',
 		description: 'How the converted PDF is returned',

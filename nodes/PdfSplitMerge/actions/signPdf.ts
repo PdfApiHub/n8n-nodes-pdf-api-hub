@@ -68,7 +68,7 @@ export const description: INodeProperties[] = [
 		name: 'sign_signature_url',
 		type: 'string',
 		default: '',
-		placeholder: 'https://example.com/my-signature.png',
+		placeholder: 'https://pdfapihub.com/my-signature.png',
 		description: 'Public URL to the signature image. Transparent PNGs work best.',
 		displayOptions: { show: { operation: ['signPdf'], sign_sig_input_type: ['url'] } },
 	},

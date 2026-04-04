@@ -1,7 +1,7 @@
-import type { IExecuteFunctions, IDataObject, INodeExecutionData,
+import type { IExecuteFunctions, INodeExecutionData,
 	INodeProperties,
 } from 'n8n-workflow';
-import { normalizeUrl, createSingleFileMultipart, parseJsonResponseBody } from '../helpers';
+import { normalizeUrl, createSingleFileMultipart, parseJsonResponseBody, checkApiResponse } from '../helpers';
 
 
 export const description: INodeProperties[] = [
@@ -10,7 +10,7 @@ export const description: INodeProperties[] = [
 		name: 'parse_input_type',
 		type: 'options',
 		options: [
-			{ name: 'URL', value: 'url' },
+			{ name: 'URL (Default)', value: 'url' },
 			{ name: 'File (Binary)', value: 'file' },
 		],
 		default: 'url',
@@ -53,7 +53,7 @@ export const description: INodeProperties[] = [
 		name: 'parse_mode',
 		type: 'options',
 		options: [
-			{ name: 'Text Only', value: 'text', description: 'Extract text only' },
+			{ name: 'Text Only (Default)', value: 'text', description: 'Extract text only' },
 			{ name: 'Layout', value: 'layout', description: 'Text + text blocks with bounding boxes' },
 			{ name: 'Tables', value: 'tables', description: 'Text + table blocks' },
 			{ name: 'Full', value: 'full', description: 'Text + blocks + tables + images' },
@@ -111,13 +111,11 @@ export async function execute(
 			method: 'POST',
 			url: 'https://pdfapihub.com/api/v1/pdf/parse',
 			...requestOptions,
-			returnFullResponse: parseInputType === 'file',
+			returnFullResponse: true,
+			ignoreHttpStatusErrors: true,
 		},
-	);
-	if (parseInputType === 'file') {
-		const responseBody = (responseData as { body?: unknown }).body;
-		returnData.push(parseJsonResponseBody(responseBody, index));
-	} else {
-		returnData.push({ json: responseData as IDataObject, pairedItem: { item: index } });
-	}
+	) as { body: unknown; statusCode: number };
+
+	checkApiResponse(this, responseData.statusCode, responseData.body, index);
+	returnData.push(parseJsonResponseBody(responseData.body, index));
 }

@@ -1,7 +1,7 @@
-import type { IExecuteFunctions, IDataObject, INodeExecutionData,
+import type { IExecuteFunctions, INodeExecutionData,
 	INodeProperties,
 } from 'n8n-workflow';
-import { normalizeUrl, createTwoFileMultipart, parseJsonResponseBody } from '../helpers';
+import { normalizeUrl, createTwoFileMultipart, parseJsonResponseBody, checkApiResponse } from '../helpers';
 
 
 export const description: INodeProperties[] = [
@@ -10,7 +10,7 @@ export const description: INodeProperties[] = [
 		name: 'doc_similarity_input_mode',
 		type: 'options',
 		options: [
-			{ name: 'URLs', value: 'url', description: 'Use two public URLs' },
+			{ name: 'URLs (Default)', value: 'url', description: 'Use two public URLs' },
 			{ name: 'Base64', value: 'base64', description: 'Use two Base64 strings (or data URLs)' },
 			{ name: 'Binary Files', value: 'file', description: 'Use two binary input properties' },
 		],
@@ -111,7 +111,7 @@ export const description: INodeProperties[] = [
 		name: 'doc_similarity_method',
 		type: 'options',
 		options: [
-			{ name: 'Auto', value: 'auto' },
+			{ name: 'Auto (Default)', value: 'auto' },
 			{ name: 'Feature Match', value: 'feature_match' },
 			{ name: 'SSIM', value: 'ssim' },
 			{ name: 'PHash', value: 'phash' },
@@ -159,11 +159,13 @@ export async function execute(
 				url: 'https://pdfapihub.com/api/v1/document/similarity',
 				...requestOptions,
 				returnFullResponse: true,
+				ignoreHttpStatusErrors: true,
 			},
 		);
 
-		const responseBody = (responseData as { body?: unknown }).body;
-		returnData.push(parseJsonResponseBody(responseBody, index));
+		const rd = responseData as { body: unknown; statusCode: number };
+		checkApiResponse(this, rd.statusCode, rd.body, index);
+		returnData.push(parseJsonResponseBody(rd.body, index));
 	} else {
 		const body: Record<string, string> = {
 			method,
@@ -185,9 +187,12 @@ export async function execute(
 				url: 'https://pdfapihub.com/api/v1/document/similarity',
 				body,
 				json: true,
+				returnFullResponse: true,
+				ignoreHttpStatusErrors: true,
 			},
-		);
+		) as { body: unknown; statusCode: number };
 
-		returnData.push({ json: responseData as IDataObject, pairedItem: { item: index } });
+		checkApiResponse(this, responseData.statusCode, responseData.body, index);
+		returnData.push(parseJsonResponseBody(responseData.body, index));
 	}
 }

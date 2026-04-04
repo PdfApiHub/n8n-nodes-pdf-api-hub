@@ -155,7 +155,7 @@ export const description: INodeProperties[] = [
 				name: 'watermark_image_url',
 				type: 'string',
 				default: '',
-				placeholder: 'https://example.com/logo.png',
+				placeholder: 'https://pdfapihub.com/favicon.ico',
 				description: 'URL to a logo/image to overlay instead of text. PNG transparency supported.',
 			},
 			{
