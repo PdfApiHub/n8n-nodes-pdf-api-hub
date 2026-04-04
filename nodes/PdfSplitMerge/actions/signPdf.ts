@@ -61,7 +61,7 @@ export const description: INodeProperties[] = [
 			{ name: 'Type Text as Signature', value: 'text', description: 'Render typed text as a signature (e.g. "John Smith")' },
 		],
 		default: 'url',
-		description: 'Use an image of your signature, or type your name to generate one',
+		description: 'Use an image of your signature, or type your name to generate one. <a href="https://pdfapihub.com/free-tools/get-signature-URL" target="_blank">Draw your signature and get a URL →</a>.',
 		displayOptions: { show: { operation: ['signPdf'] } },
 	},
 	{
@@ -130,7 +130,7 @@ export const description: INodeProperties[] = [
 		displayName: 'Sign All Pages',
 		name: 'sign_all_pages',
 		type: 'boolean',
-		default: false,
+		default: true,
 		description: 'Whether to stamp the signature on every page instead of just one',
 		displayOptions: { show: { operation: ['signPdf'] } },
 	},
@@ -143,13 +143,32 @@ export const description: INodeProperties[] = [
 			{ name: 'Bottom Left', value: 'bottom-left' },
 			{ name: 'Bottom Right (Default)', value: 'bottom-right' },
 			{ name: 'Center', value: 'center' },
+			{ name: 'Custom (X/Y) …', value: 'custom' },
 			{ name: 'Top Center', value: 'top-center' },
 			{ name: 'Top Left', value: 'top-left' },
 			{ name: 'Top Right', value: 'top-right' },
 		],
 		default: 'bottom-right',
-		description: 'Where to place the signature on the page. Overridden by explicit X/Y coordinates in Advanced Options.',
+		description: 'Where to place the signature — choose "Custom" to set exact X/Y coordinates',
 		displayOptions: { show: { operation: ['signPdf'] } },
+	},
+	{
+		displayName: 'X Position (Points)',
+		name: 'sign_x',
+		type: 'number',
+		default: 0,
+		typeOptions: { minValue: 0 },
+		description: 'Left edge of the signature in PDF points (72 points = 1 inch)',
+		displayOptions: { show: { operation: ['signPdf'], sign_position: ['custom'] } },
+	},
+	{
+		displayName: 'Y Position (Points)',
+		name: 'sign_y',
+		type: 'number',
+		default: 0,
+		typeOptions: { minValue: 0 },
+		description: 'Bottom edge of the signature in PDF points (0 = bottom of page)',
+		displayOptions: { show: { operation: ['signPdf'], sign_position: ['custom'] } },
 	},
 
 	// ─── 4. Output ──────────────────────────────────────────────────
@@ -200,20 +219,6 @@ export const description: INodeProperties[] = [
 				typeOptions: { minValue: 0 },
 				description: 'Width of the signature in PDF points. 0 = auto (28% of page width).',
 			},
-			{
-				displayName: 'X Coordinate',
-				name: 'x',
-				type: 'number',
-				default: 0,
-				description: 'Exact X position (left edge) in PDF points. Overrides the Position preset when set.',
-			},
-			{
-				displayName: 'Y Coordinate',
-				name: 'y',
-				type: 'number',
-				default: 0,
-				description: 'Exact Y position (bottom edge) in PDF points. Overrides the Position preset when set.',
-			},
 		],
 	},
 ];
@@ -238,8 +243,10 @@ export async function execute(
 
 	const body: Record<string, unknown> = {
 		output_format: outputFormat,
-		position,
 	};
+
+	// Only send position preset to API (not 'custom')
+	if (position !== 'custom') body.position = position;
 
 	// PDF input
 	if (pdfInputType === 'url') {
@@ -271,11 +278,17 @@ export async function execute(
 		body.page = page;
 	}
 
+	// Position — custom X/Y or preset
+	if (position === 'custom') {
+		const x = this.getNodeParameter('sign_x', index, 0) as number;
+		const y = this.getNodeParameter('sign_y', index, 0) as number;
+		if (x > 0) body.x = x;
+		if (y > 0) body.y = y;
+	}
+
 	// Advanced options
 	if (advanced.width && (advanced.width as number) > 0) body.width = advanced.width;
 	if (advanced.height && (advanced.height as number) > 0) body.height = advanced.height;
-	if (advanced.x && (advanced.x as number) > 0) { body.x = advanced.x; }
-	if (advanced.y && (advanced.y as number) > 0) { body.y = advanced.y; }
 	if (advanced.opacity !== undefined && (advanced.opacity as number) < 1) body.opacity = advanced.opacity;
 
 	// ── API call (JSON only — multipart for binary PDF input) ──────

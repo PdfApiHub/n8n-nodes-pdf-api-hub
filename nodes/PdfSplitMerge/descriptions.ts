@@ -13,9 +13,9 @@ export const resourceProperty: INodeProperties = {
 				description: 'Turn any webpage or HTML into a polished PDF',
 			},
 			{
-				name: 'Sign PDF',
+				name: 'Sign & Watermark PDF',
 				value: 'watermark',
-				description: 'Stamp a signature or watermark onto your PDFs',
+				description: 'Stamp a signature or add text/image watermarks onto your PDFs',
 			},
 			{
 				name: 'Screenshot Website to Image',
