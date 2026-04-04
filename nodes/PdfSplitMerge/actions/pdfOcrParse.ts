@@ -56,10 +56,17 @@ export const description: INodeProperties[] = [
 	{
 		displayName: 'Language',
 		name: 'ocr_lang',
-		type: 'string',
+		type: 'options',
+		noDataExpression: true,
+		typeOptions: { allowCustomValue: true },
+		options: [
+			{ name: 'English (Default)', value: 'eng' },
+			{ name: 'Portuguese', value: 'por' },
+			{ name: 'Russian', value: 'rus' },
+		],
 		default: 'eng',
-		placeholder: 'eng+hin',
-		description: 'Tesseract language code(s). Use + to combine multiple: "eng", "eng+hin", "eng+fra+deu".',
+		placeholder: 'eng+por',
+		description: 'OCR language. Pick from the list or type a custom Tesseract code. Use + to combine: "eng+por", "eng+rus". <a href="https://pdfapihub.com/request-more-fonts" target="_blank">Request more languages</a>.',
 		displayOptions: { show: { operation: ['pdfOcrParse', 'imageOcrParse'] } },
 	},
 
