@@ -65,6 +65,11 @@ export const resourceProperty: INodeProperties = {
 				name: 'Watermark & Sign PDF',
 				value: 'watermark',
 				description: 'Add text/image watermarks or stamp signatures onto PDFs and images',
+			},
+			{
+				name: 'File Management',
+				value: 'fileManagement',
+				description: 'Upload, list, and delete files in your cloud storage',
 			}
 			],
 		default: 'pdfParsing',
@@ -412,5 +417,37 @@ export const operationProperties: INodeProperties[] = [
 			},
 		],
 		default: 'parsePdf',
+	},
+{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['fileManagement'],
+			},
+		},
+		options: [
+			{
+				name: 'Upload File',
+				value: 'uploadFile',
+				description: 'Upload a file to cloud storage — auto-deleted after 30 days',
+				action: 'Upload a file',
+			},
+			{
+				name: 'List Files',
+				value: 'listFiles',
+				description: 'List all files uploaded with your API key',
+				action: 'List uploaded files',
+			},
+			{
+				name: 'Delete File',
+				value: 'deleteFile',
+				description: 'Delete a file from cloud storage by URL',
+				action: 'Delete an uploaded file',
+			},
+		],
+		default: 'uploadFile',
 	},
 ];

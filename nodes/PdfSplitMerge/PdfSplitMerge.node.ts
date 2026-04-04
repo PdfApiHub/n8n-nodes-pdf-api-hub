@@ -63,6 +63,8 @@ export class PdfSplitMerge implements INodeType {
 				'HTML2PDF',
 				'Convert HTML to PDF',
 				'Combine PDF',
+				'Upload File',
+				'File Storage',
 			],
 			categories: ['Documents', 'Utilities'],
 			subcategories: {

@@ -20,6 +20,7 @@ import * as fetchHtml from './fetchHtml';
 import * as addWatermark from './addWatermark';
 import * as signPdf from './signPdf';
 import * as pdfToFormat from './pdfToFormat';
+import * as fileManagement from './fileManagement';
 
 /**
  * Action handler type.
@@ -47,6 +48,7 @@ export const allActionDescriptions: INodeProperties[] = [
 	...documentSimilarity.description,
 	...docxToPdf.description,
 	...fetchHtml.description,
+	...fileManagement.description,
 	...generateImage.description,
 	...generatePdf.description,
 	...imageOcrParse.description,
@@ -118,6 +120,11 @@ const actionMap: Record<string, ActionHandler> = {
 	// Watermark & Sign
 	addWatermark: addWatermark.execute as ActionHandler,
 	signPdf: signPdf.execute as ActionHandler,
+
+	// File Management
+	uploadFile: fileManagement.execute,
+	listFiles: fileManagement.execute,
+	deleteFile: fileManagement.execute,
 };
 
 /**
