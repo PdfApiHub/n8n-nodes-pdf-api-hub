@@ -50,6 +50,47 @@ describe('generateImage', () => {
 			expect(data.success).toBe(true);
 			if (data.image_url) urlsToCleanup.push(data.image_url as string);
 		});
+
+		it('should support both (URL + base64) output', async () => {
+			const { status, data } = await postJson('/v1/generateImage', {
+				html_content: '<p>Both output test</p>',
+				width: 400,
+				height: 200,
+				output_format: 'both',
+			});
+			expect(status).toBe(200);
+			expect(data.success).toBe(true);
+			expect(data.image_url).toBeTruthy();
+			expect(data.image_base64).toBeTruthy();
+			if (data.image_url) urlsToCleanup.push(data.image_url as string);
+		});
+
+		it('should support dynamic params in HTML', async () => {
+			const { status, data } = await postJson('/v1/generateImage', {
+				html_content: '<h1>Hello {{name}}</h1>',
+				dynamic_params: { name: 'Vitest' },
+				width: 400,
+				height: 200,
+				output_format: 'url',
+			});
+			expect(status).toBe(200);
+			expect(data.success).toBe(true);
+			if (data.image_url) urlsToCleanup.push(data.image_url as string);
+		});
+
+		it('should support retina (deviceScaleFactor: 2)', async () => {
+			const { status, data } = await postJson('/v1/generateImage', {
+				html_content: '<h1>Retina</h1>',
+				width: 400,
+				height: 200,
+				deviceScaleFactor: 2,
+				quality: 100,
+				output_format: 'url',
+			});
+			expect(status).toBe(200);
+			expect(data.success).toBe(true);
+			if (data.image_url) urlsToCleanup.push(data.image_url as string);
+		});
 	});
 
 	describe('URL to Image', () => {

@@ -51,4 +51,31 @@ describe('fetchHtml', () => {
 		expect(status).toBeGreaterThanOrEqual(400);
 		expect(data.error).toBeTruthy();
 	});
+
+	it('should support wait_until: commit', async () => {
+		const { status, data } = await postJson('/v1/url-to-html', {
+			url: 'https://example.com',
+			wait_till: 'commit',
+		});
+		expect(status).toBe(200);
+		expect(data.success).toBe(true);
+	});
+
+	it('should support extra delay (wait_for_timeout)', async () => {
+		const { status, data } = await postJson('/v1/url-to-html', {
+			url: 'https://example.com',
+			wait_for_timeout: 1000,
+		});
+		expect(status).toBe(200);
+		expect(data.success).toBe(true);
+	});
+
+	it('should support custom user agent', async () => {
+		const { status, data } = await postJson('/v1/url-to-html', {
+			url: 'https://example.com',
+			user_agent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)',
+		});
+		expect(status).toBe(200);
+		expect(data.success).toBe(true);
+	});
 });

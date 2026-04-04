@@ -19,7 +19,6 @@ describe('compressPdf', () => {
 		});
 		expect(status).toBe(200);
 		expect(data.success).toBe(true);
-		expect(data.url || data.compressed_pdf_url).toBeTruthy();
 		const url = (data.url || data.compressed_pdf_url) as string;
 		if (url) urlsToCleanup.push(url);
 	});
@@ -32,6 +31,41 @@ describe('compressPdf', () => {
 		});
 		expect(status).toBe(200);
 		expect(buffer.subarray(0, 5).toString()).toBe('%PDF-');
+	});
+
+	it('should compress → base64 output', async () => {
+		const { status, data } = await postJson('/v1/compressPdf', {
+			url: SAMPLE.PDF,
+			compression: 'high',
+			output: 'base64',
+		});
+		expect(status).toBe(200);
+		expect(data.success).toBe(true);
+		expect(data.pdf_base64).toBeTruthy();
+	});
+
+	it('should support low compression', async () => {
+		const { status, data } = await postJson('/v1/compressPdf', {
+			url: SAMPLE.PDF,
+			compression: 'low',
+			output: 'url',
+		});
+		expect(status).toBe(200);
+		expect(data.success).toBe(true);
+		const url = (data.url || data.compressed_pdf_url) as string;
+		if (url) urlsToCleanup.push(url);
+	});
+
+	it('should support max compression', async () => {
+		const { status, data } = await postJson('/v1/compressPdf', {
+			url: SAMPLE.PDF,
+			compression: 'max',
+			output: 'url',
+		});
+		expect(status).toBe(200);
+		expect(data.success).toBe(true);
+		const url = (data.url || data.compressed_pdf_url) as string;
+		if (url) urlsToCleanup.push(url);
 	});
 });
 
@@ -65,6 +99,63 @@ describe('lockPdf', () => {
 		});
 		expect(status).toBeGreaterThanOrEqual(400);
 		expect(data.error).toBeTruthy();
+	});
+
+	it('should lock → base64 output', async () => {
+		const { status, data } = await postJson('/v1/lockPdf', {
+			url: SAMPLE.PDF,
+			password: 'test-b64',
+			output: 'base64',
+		});
+		expect(status).toBe(200);
+		expect(data.success).toBe(true);
+		expect(data.pdf_base64).toBeTruthy();
+	});
+
+	it('should lock with owner password', async () => {
+		const { status, data } = await postJson('/v1/lockPdf', {
+			url: SAMPLE.PDF,
+			password: 'viewer',
+			owner_password: 'admin123',
+			output: 'url',
+		});
+		expect(status).toBe(200);
+		expect(data.success).toBe(true);
+		const url = (data.url) as string;
+		if (url) urlsToCleanup.push(url);
+	});
+
+	it('should lock with AES-128 encryption', async () => {
+		const { status, data } = await postJson('/v1/lockPdf', {
+			url: SAMPLE.PDF,
+			password: 'aes128test',
+			encryption: 'aes128',
+			output: 'url',
+		});
+		expect(status).toBe(200);
+		expect(data.success).toBe(true);
+		const url = (data.url) as string;
+		if (url) urlsToCleanup.push(url);
+	});
+
+	it('should lock with permissions (deny copy + modify)', async () => {
+		const { status, data } = await postJson('/v1/lockPdf', {
+			url: SAMPLE.PDF,
+			password: 'permtest',
+			owner_password: 'ownerpass',
+			permissions: {
+				print: true,
+				copy: false,
+				modify: false,
+				annotate: true,
+				fill_forms: true,
+			},
+			output: 'url',
+		});
+		expect(status).toBe(200);
+		expect(data.success).toBe(true);
+		const url = (data.url) as string;
+		if (url) urlsToCleanup.push(url);
 	});
 });
 

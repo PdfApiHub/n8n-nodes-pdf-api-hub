@@ -44,4 +44,25 @@ describe('parsePdf', () => {
 		expect(status).toBeGreaterThanOrEqual(400);
 		expect(data.error).toBeTruthy();
 	});
+
+	it('should extract in full mode', async () => {
+		const { status, data } = await postJson('/v1/pdf/parse', {
+			url: SAMPLE.PDF,
+			mode: 'full',
+			pages: '1',
+		});
+		expect(status).toBe(200);
+		expect(data.success).toBe(true);
+	});
+
+	it('should extract specific page', async () => {
+		const { status, data } = await postJson('/v1/pdf/parse', {
+			url: SAMPLE.PDF,
+			mode: 'text',
+			pages: '1',
+		});
+		expect(status).toBe(200);
+		expect(data.success).toBe(true);
+		expect(data.text || data.pages).toBeTruthy();
+	});
 });

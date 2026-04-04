@@ -144,4 +144,143 @@ describe('generatePdf', () => {
 			expect(data.error).toBeTruthy();
 		});
 	});
+
+	// ─── Paper sizes & page setup ─────────────────────────────────
+	describe('Page setup combinations', () => {
+		it('should support Letter paper size', async () => {
+			const { status, data } = await postJson('/v1/generatePdf', {
+				html_content: '<h1>Letter</h1>',
+				paper_size: 'Letter',
+				output_format: 'url',
+			});
+			expect(status).toBe(200);
+			expect(data.success).toBe(true);
+			if (data.pdf_url) urlsToCleanup.push(data.pdf_url as string);
+		});
+
+		it('should support A3 paper size with landscape', async () => {
+			const { status, data } = await postJson('/v1/generatePdf', {
+				html_content: '<h1>A3 Landscape</h1>',
+				paper_size: 'A3',
+				landscape: true,
+				output_format: 'url',
+			});
+			expect(status).toBe(200);
+			expect(data.success).toBe(true);
+			if (data.pdf_url) urlsToCleanup.push(data.pdf_url as string);
+		});
+
+		it('should support margin presets', async () => {
+			const { status, data } = await postJson('/v1/generatePdf', {
+				html_content: '<h1>Large margins</h1>',
+				margin: 'large',
+				output_format: 'url',
+			});
+			expect(status).toBe(200);
+			expect(data.success).toBe(true);
+			if (data.pdf_url) urlsToCleanup.push(data.pdf_url as string);
+		});
+
+		it('should support print_background: false', async () => {
+			const { status, data } = await postJson('/v1/generatePdf', {
+				html_content: '<div style="background:red;padding:20px"><h1>No BG</h1></div>',
+				print_background: false,
+				output_format: 'url',
+			});
+			expect(status).toBe(200);
+			expect(data.success).toBe(true);
+			if (data.pdf_url) urlsToCleanup.push(data.pdf_url as string);
+		});
+
+		it('should support displayHeaderFooter', async () => {
+			const { status, data } = await postJson('/v1/generatePdf', {
+				html_content: '<h1>Header Footer</h1>',
+				displayHeaderFooter: true,
+				output_format: 'url',
+			});
+			expect(status).toBe(200);
+			expect(data.success).toBe(true);
+			if (data.pdf_url) urlsToCleanup.push(data.pdf_url as string);
+		});
+
+		it('should support max page_size limit', async () => {
+			const { status, data } = await postJson('/v1/generatePdf', {
+				html_content: '<h1>Max 1 page</h1>' + '<p>Content</p>'.repeat(100),
+				page_size: 1,
+				output_format: 'url',
+			});
+			expect(status).toBe(200);
+			expect(data.success).toBe(true);
+			if (data.pdf_url) urlsToCleanup.push(data.pdf_url as string);
+		});
+
+		it('should support custom viewport', async () => {
+			const { status, data } = await postJson('/v1/generatePdf', {
+				html_content: '<h1>Custom viewport</h1>',
+				viewPortWidth: 1920,
+				viewPortHeight: 1080,
+				output_format: 'url',
+			});
+			expect(status).toBe(200);
+			expect(data.success).toBe(true);
+			if (data.pdf_url) urlsToCleanup.push(data.pdf_url as string);
+		});
+
+		it('should support Google Fonts', async () => {
+			const { status, data } = await postJson('/v1/generatePdf', {
+				html_content: '<h1 style="font-family: Roboto">Roboto Font</h1>',
+				font: 'Roboto',
+				output_format: 'url',
+			});
+			expect(status).toBe(200);
+			expect(data.success).toBe(true);
+			if (data.pdf_url) urlsToCleanup.push(data.pdf_url as string);
+		});
+	});
+
+	// ─── URL to PDF combinations ──────────────────────────────────
+	describe('URL to PDF combinations', () => {
+		it('should support base64 output from URL', async () => {
+			const { status, data } = await postJson('/v1/generatePdf', {
+				url: 'https://example.com',
+				output_format: 'base64',
+			});
+			expect(status).toBe(200);
+			expect(data.success).toBe(true);
+			expect(data.pdf_base64).toBeTruthy();
+		});
+
+		it('should support cookie_accept_text', async () => {
+			const { status, data } = await postJson('/v1/generatePdf', {
+				url: 'https://example.com',
+				cookie_accept_text: 'Accept ALL',
+				output_format: 'url',
+			});
+			expect(status).toBe(200);
+			expect(data.success).toBe(true);
+			if (data.pdf_url) urlsToCleanup.push(data.pdf_url as string);
+		});
+
+		it('should support wait_until: domcontentloaded', async () => {
+			const { status, data } = await postJson('/v1/generatePdf', {
+				url: 'https://example.com',
+				wait_until: 'domcontentloaded',
+				output_format: 'url',
+			});
+			expect(status).toBe(200);
+			expect(data.success).toBe(true);
+			if (data.pdf_url) urlsToCleanup.push(data.pdf_url as string);
+		});
+
+		it('should support full_page: false', async () => {
+			const { status, data } = await postJson('/v1/generatePdf', {
+				url: 'https://example.com',
+				full_page: false,
+				output_format: 'url',
+			});
+			expect(status).toBe(200);
+			expect(data.success).toBe(true);
+			if (data.pdf_url) urlsToCleanup.push(data.pdf_url as string);
+		});
+	});
 });

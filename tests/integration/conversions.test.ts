@@ -46,9 +46,43 @@ describe('pdfToImage', () => {
 			output: 'file',
 		});
 		expect(status).toBe(200);
-		// PNG magic bytes
 		expect(buffer[0]).toBe(0x89);
 		expect(buffer.subarray(1, 4).toString()).toBe('PNG');
+	});
+
+	it('should convert to WebP format', async () => {
+		const { status, data } = await postJson('/v1/convert/pdf/image', {
+			url: SAMPLE.PDF,
+			pages: '1',
+			image_format: 'webp',
+			output: 'url',
+		});
+		expect(status).toBe(200);
+		expect(data.success).toBe(true);
+	});
+
+	it('should convert → base64 output', async () => {
+		const { status, data } = await postJson('/v1/convert/pdf/image', {
+			url: SAMPLE.PDF,
+			pages: '1',
+			image_format: 'png',
+			output: 'base64',
+		});
+		expect(status).toBe(200);
+		expect(data.success).toBe(true);
+	});
+
+	it('should support page range', async () => {
+		const { status, data } = await postJson('/v1/convert/pdf/image', {
+			url: SAMPLE.PDF,
+			pages: '1',
+			image_format: 'jpg',
+			dpi: 150,
+			quality: 80,
+			output: 'url',
+		});
+		expect(status).toBe(200);
+		expect(data.success).toBe(true);
 	});
 });
 
@@ -125,6 +159,25 @@ describe('pdfToXlsx', () => {
 		expect(data.success).toBe(true);
 		expect(data.xlsx_url).toBeTruthy();
 		if (data.xlsx_url) urlsToCleanup.push(data.xlsx_url as string);
+	});
+
+	it('should convert PDF to Excel → base64', async () => {
+		const { status, data } = await postJson('/v1/convert/pdf/xlsx', {
+			url: SAMPLE.PDF,
+			output: 'base64',
+		});
+		expect(status).toBe(200);
+		expect(data.success).toBe(true);
+	});
+
+	it('should support page selection', async () => {
+		const { status, data } = await postJson('/v1/convert/pdf/xlsx', {
+			url: SAMPLE.PDF,
+			pages: '1',
+			output: 'url',
+		});
+		expect(status).toBe(200);
+		expect(data.success).toBe(true);
 	});
 });
 
