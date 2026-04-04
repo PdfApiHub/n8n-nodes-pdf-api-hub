@@ -52,15 +52,16 @@ export const description: INodeProperties[] = [
 
 	// ─── 2. Signature Input ─────────────────────────────────────────
 	{
-		displayName: 'Signature Input Type',
+		displayName: 'Signature Type',
 		name: 'sign_sig_input_type',
 		type: 'options',
 		options: [
-			{ name: 'URL (Default)', value: 'url', description: 'Provide a public URL to the signature image (PNG/JPG/WebP)' },
-			{ name: 'Base64', value: 'base64', description: 'Provide base64-encoded signature image' },
+			{ name: 'Image — URL (Default)', value: 'url', description: 'Provide a public URL to a signature image (PNG/JPG/WebP)' },
+			{ name: 'Image — Base64', value: 'base64', description: 'Provide a base64-encoded signature image' },
+			{ name: 'Type Text as Signature', value: 'text', description: 'Render typed text as a signature (e.g. "John Smith")' },
 		],
 		default: 'url',
-		description: 'How to provide the signature image',
+		description: 'Use an image of your signature, or type your name to generate one',
 		displayOptions: { show: { operation: ['signPdf'] } },
 	},
 	{
@@ -80,16 +81,50 @@ export const description: INodeProperties[] = [
 		description: 'Base64-encoded signature image (PNG/JPG/WebP)',
 		displayOptions: { show: { operation: ['signPdf'], sign_sig_input_type: ['base64'] } },
 	},
+	{
+		displayName: 'Signature Text',
+		name: 'sign_text',
+		type: 'string',
+		default: '',
+		placeholder: 'John Smith',
+		description: 'Type your name or text — it will be rendered as a signature on the PDF',
+		displayOptions: { show: { operation: ['signPdf'], sign_sig_input_type: ['text'] } },
+	},
+	{
+		displayName: 'Text Color',
+		name: 'sign_color',
+		type: 'color',
+		default: '#000000',
+		description: 'Color of the text signature (e.g. dark blue #1a0dab for a pen-like look)',
+		displayOptions: { show: { operation: ['signPdf'], sign_sig_input_type: ['text'] } },
+	},
+	{
+		displayName: 'Font Size',
+		name: 'sign_font_size',
+		type: 'number',
+		default: 48,
+		typeOptions: { minValue: 1 },
+		description: 'Font size for the text signature in points',
+		displayOptions: { show: { operation: ['signPdf'], sign_sig_input_type: ['text'] } },
+	},
+	{
+		displayName: 'Add Date Below Signature',
+		name: 'sign_date_stamp',
+		type: 'boolean',
+		default: false,
+		description: 'Whether to add the current date (UTC) below the signature text',
+		displayOptions: { show: { operation: ['signPdf'], sign_sig_input_type: ['text'] } },
+	},
 
 	// ─── 3. Placement ───────────────────────────────────────────────
 	{
-		displayName: 'Page',
+		displayName: 'Page to Sign',
 		name: 'sign_page',
 		type: 'number',
 		default: 0,
 		typeOptions: { minValue: 0 },
-		description: 'Page number to sign (1-based). 0 = last page (default).',
-		displayOptions: { show: { operation: ['signPdf'] } },
+		description: 'Which page to place the signature on (1 = first page, 2 = second, etc.). Leave as 0 to sign the last page — most common for contracts.',
+		displayOptions: { show: { operation: ['signPdf'], sign_all_pages: [false] } },
 	},
 	{
 		displayName: 'Sign All Pages',
@@ -216,8 +251,17 @@ export async function execute(
 	// Signature input
 	if (sigInputType === 'url') {
 		body.signature_url = this.getNodeParameter('sign_signature_url', index, '') as string;
-	} else {
+	} else if (sigInputType === 'base64') {
 		body.base64_signature = this.getNodeParameter('sign_signature_base64', index, '') as string;
+	} else {
+		// Text signature
+		body.sign_text = this.getNodeParameter('sign_text', index, '') as string;
+		const signColor = this.getNodeParameter('sign_color', index, '#000000') as string;
+		if (signColor && signColor !== '#000000') body.sign_color = signColor;
+		const fontSize = this.getNodeParameter('sign_font_size', index, 48) as number;
+		if (fontSize !== 48) body.font_size = fontSize;
+		const dateStamp = this.getNodeParameter('sign_date_stamp', index, false) as boolean;
+		if (dateStamp) body.date_stamp = true;
 	}
 
 	// Page
