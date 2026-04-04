@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-pdf-api-hub",
-	"version": "4.0.17",
+	"version": "4.0.18",
 	"description": "The most powerful PDF toolkit for n8n — HTML to PDF, sign PDF, OCR, extract tables, merge/split, compress, convert to Excel/Word/PPTX, and 30+ more operations",
 	"license": "MIT",
 	"homepage": "https://pdfapihub.com",
