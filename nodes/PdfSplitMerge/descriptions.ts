@@ -7,74 +7,74 @@ export const resourceProperty: INodeProperties = {
 		noDataExpression: true,
 		options: [
 			{
-				name: '1. HTML / URL to PDF',
-				value: 'pdfCreation',
-				description: 'Turn any webpage or HTML into a polished PDF',
-			},
-			{
-				name: '2. Sign PDF',
-				value: 'watermark',
-				description: 'Stamp a signature or watermark onto your PDFs',
-			},
-			{
-				name: '3. Screenshot Website to Image',
-				value: 'imageGeneration',
-				description: 'Capture any webpage or HTML as a PNG screenshot',
-			},
-			{
-				name: '4. OCR — Read Scanned PDFs & Images',
-				value: 'ocrParsing',
-				description: 'Extract text from scanned documents and photos using OCR',
-			},
-			{
-				name: '5. Extract PDF Text & Tables',
-				value: 'pdfParsing',
-				description: 'Pull out text, tables, or structured data from any PDF',
-			},
-			{
-				name: '6. PDF to Excel / CSV / Word / PowerPoint',
-				value: 'documentConversion',
-				description: 'Convert PDFs into editable formats — Excel, Word, CSV, HTML, PPTX',
-			},
-			{
-				name: '7. Merge / Split PDF',
-				value: 'pdfManipulation',
-				description: 'Combine multiple PDFs or split one into parts',
-			},
-			{
-				name: '8. Compress PDF',
-				value: 'compressResource',
-				description: 'Shrink PDF file size without losing quality',
-			},
-			{
-				name: '9. Protect / Unlock PDF',
-				value: 'pdfSecurity',
-				description: 'Add or remove password protection on PDFs',
-			},
-			{
-				name: '10. Scrape Website HTML',
-				value: 'urlToHtml',
-				description: 'Fetch the fully-rendered HTML of any page — great for SPAs',
-			},
-			{
-				name: '11. Images to PDF',
-				value: 'imageToPdf',
-				description: 'Combine JPG, PNG, or WebP images into a single PDF',
-			},
-			{
-				name: '12. PDF to Image',
-				value: 'pdfToImage',
-				description: 'Render PDF pages as PNG, JPG, or WebP images',
-			},
-			{
-				name: '13. Compare Documents',
+				name: 'Compare Document',
 				value: 'documentIntelligence',
 				description: 'Check how similar two PDFs or images are',
 			},
 			{
-				name: '14. File Management',
+				name: 'Compress PDF',
+				value: 'compressResource',
+				description: 'Shrink PDF file size without losing quality',
+			},
+			{
+				name: 'Extract PDF Text & Table',
+				value: 'pdfParsing',
+				description: 'Pull out text, tables, or structured data from any PDF',
+			},
+			{
+				name: 'File Management',
 				value: 'fileManagement',
 				description: 'Upload, list, or delete files in your cloud storage',
+			},
+			{
+				name: 'HTML / URL to PDF',
+				value: 'pdfCreation',
+				description: 'Turn any webpage or HTML into a polished PDF',
+			},
+			{
+				name: 'Images to PDF',
+				value: 'imageToPdf',
+				description: 'Combine JPG, PNG, or WebP images into a single PDF',
+			},
+			{
+				name: 'Merge / Split PDF',
+				value: 'pdfManipulation',
+				description: 'Combine multiple PDFs or split one into parts',
+			},
+			{
+				name: 'OCR — Read Scanned PDFs & Image',
+				value: 'ocrParsing',
+				description: 'Extract text from scanned documents and photos using OCR',
+			},
+			{
+				name: 'PDF to Excel / CSV / Word / PowerPoint',
+				value: 'documentConversion',
+				description: 'Convert PDFs into editable formats — Excel, Word, CSV, HTML, PPTX',
+			},
+			{
+				name: 'PDF to Image',
+				value: 'pdfToImage',
+				description: 'Render PDF pages as PNG, JPG, or WebP images',
+			},
+			{
+				name: 'Protect / Unlock PDF',
+				value: 'pdfSecurity',
+				description: 'Add or remove password protection on PDFs',
+			},
+			{
+				name: 'Scrape Website HTML',
+				value: 'urlToHtml',
+				description: 'Fetch the fully-rendered HTML of any page — great for SPAs',
+			},
+			{
+				name: 'Screenshot Website to Image',
+				value: 'imageGeneration',
+				description: 'Capture any webpage or HTML as a PNG screenshot',
+			},
+			{
+				name: 'Sign PDF',
+				value: 'watermark',
+				description: 'Stamp a signature or watermark onto your PDFs',
 			},
 			],
 		default: 'pdfCreation',
@@ -209,6 +209,12 @@ export const operationProperties: INodeProperties[] = [
 				action: 'Convert a document to PDF',
 			},
 			{
+				name: 'PDF to CSV',
+				value: 'pdfToCsv',
+				description: 'Extract tables and text from PDF into CSV format',
+				action: 'Convert PDF to CSV',
+			},
+			{
 				name: 'PDF to DOCX',
 				value: 'pdfToDocx',
 				description: 'Convert PDF to DOCX',
@@ -218,19 +224,7 @@ export const operationProperties: INodeProperties[] = [
 				name: 'PDF to Excel (XLSX)',
 				value: 'pdfToXlsx',
 				description: 'Extract tables and text from PDF into an Excel spreadsheet — one sheet per page',
-				action: 'Convert PDF to Excel',
-			},
-			{
-				name: 'PDF to CSV',
-				value: 'pdfToCsv',
-				description: 'Extract tables and text from PDF into CSV format',
-				action: 'Convert PDF to CSV',
-			},
-			{
-				name: 'PDF to Text',
-				value: 'pdfToTxt',
-				description: 'Extract plain text from all or selected PDF pages',
-				action: 'Convert PDF to plain text',
+				action: 'Convert pdf to excel',
 			},
 			{
 				name: 'PDF to HTML',
@@ -242,7 +236,13 @@ export const operationProperties: INodeProperties[] = [
 				name: 'PDF to PowerPoint (PPTX)',
 				value: 'pdfToPptx',
 				description: 'Convert each PDF page into a PowerPoint slide',
-				action: 'Convert PDF to PowerPoint',
+				action: 'Convert pdf to power point',
+			},
+			{
+				name: 'PDF to Text',
+				value: 'pdfToTxt',
+				description: 'Extract plain text from all or selected PDF pages',
+				action: 'Convert PDF to plain text',
 			},
 		],
 		default: 'docxToPdf',
@@ -360,7 +360,7 @@ export const operationProperties: INodeProperties[] = [
 				name: 'Merge PDF',
 				value: 'mergePdf',
 				description: 'Combine multiple PDFs into one document',
-				action: 'Merge multiple PDFs into one',
+				action: 'Merge multiple pd fs into one',
 			},
 			{
 				name: 'Split PDF',

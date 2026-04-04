@@ -72,7 +72,7 @@ export const description: INodeProperties[] = [
 
 	// ─── 3. Image Size (HTML only) ─────────────────────────────────
 	{
-		displayName: 'Image Width (px)',
+		displayName: 'Image Width (Px)',
 		name: 'image_width',
 		type: 'number',
 		default: 1280,
@@ -81,7 +81,7 @@ export const description: INodeProperties[] = [
 		displayOptions: { show: { operation: ['htmlToImage'] } },
 	},
 	{
-		displayName: 'Image Height (px)',
+		displayName: 'Image Height (Px)',
 		name: 'image_height',
 		type: 'number',
 		default: 720,
@@ -138,20 +138,20 @@ export const description: INodeProperties[] = [
 		name: 'image_viewport_preset',
 		type: 'options',
 		options: [
+			{ name: 'Custom …', value: 'custom' },
 			{ name: 'Desktop (1920 × 1080) (Default)', value: '1920x1080' },
-			{ name: 'Standard (1280 × 720)', value: '1280x720' },
 			{ name: 'Laptop (1366 × 768)', value: '1366x768' },
 			{ name: 'Large Desktop (2560 × 1440)', value: '2560x1440' },
 			{ name: 'Mobile (375 × 812)', value: '375x812' },
+			{ name: 'Standard (1280 × 720)', value: '1280x720' },
 			{ name: 'Tablet (768 × 1024)', value: '768x1024' },
-			{ name: 'Custom …', value: 'custom' },
 		],
 		default: '1920x1080',
 		description: 'Browser viewport dimensions used during rendering',
 		displayOptions: { show: { operation: ['htmlToImage', 'urlToImage'] } },
 	},
 	{
-		displayName: 'Viewport Width (px)',
+		displayName: 'Viewport Width (Px)',
 		name: 'image_viewport_width',
 		type: 'number',
 		default: 1920,
@@ -160,7 +160,7 @@ export const description: INodeProperties[] = [
 		displayOptions: { show: { operation: ['htmlToImage', 'urlToImage'], image_viewport_preset: ['custom'] } },
 	},
 	{
-		displayName: 'Viewport Height (px)',
+		displayName: 'Viewport Height (Px)',
 		name: 'image_viewport_height',
 		type: 'number',
 		default: 1080,

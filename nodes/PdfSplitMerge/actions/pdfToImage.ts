@@ -134,7 +134,7 @@ export const description: INodeProperties[] = [
 			{
 				displayName: 'Background Color',
 				name: 'background_color',
-				type: 'string',
+				type: 'color',
 				default: '',
 				description: 'Hex color to use as background for transparent PNGs (e.g. #FFFFFF for white)',
 				placeholder: '#FFFFFF',
