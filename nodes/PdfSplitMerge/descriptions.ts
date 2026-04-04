@@ -5,41 +5,22 @@ export const resourceProperty: INodeProperties = {
 		name: 'resource',
 		type: 'options',
 		noDataExpression: true,
+		// eslint-disable-next-line n8n-nodes-base/node-param-options-type-unsorted-items
 		options: [
-			{
-				name: 'Compare Document',
-				value: 'documentIntelligence',
-				description: 'Check how similar two PDFs or images are',
-			},
-			{
-				name: 'Compress PDF',
-				value: 'compressResource',
-				description: 'Shrink PDF file size without losing quality',
-			},
-			{
-				name: 'Extract PDF Text & Table',
-				value: 'pdfParsing',
-				description: 'Pull out text, tables, or structured data from any PDF',
-			},
-			{
-				name: 'File Management',
-				value: 'fileManagement',
-				description: 'Upload, list, or delete files in your cloud storage',
-			},
 			{
 				name: 'HTML / URL to PDF',
 				value: 'pdfCreation',
 				description: 'Turn any webpage or HTML into a polished PDF',
 			},
 			{
-				name: 'Images to PDF',
-				value: 'imageToPdf',
-				description: 'Combine JPG, PNG, or WebP images into a single PDF',
+				name: 'Sign PDF',
+				value: 'watermark',
+				description: 'Stamp a signature or watermark onto your PDFs',
 			},
 			{
-				name: 'Merge / Split PDF',
-				value: 'pdfManipulation',
-				description: 'Combine multiple PDFs or split one into parts',
+				name: 'Screenshot Website to Image',
+				value: 'imageGeneration',
+				description: 'Capture any webpage or HTML as a PNG screenshot',
 			},
 			{
 				name: 'OCR — Read Scanned PDFs & Image',
@@ -47,14 +28,24 @@ export const resourceProperty: INodeProperties = {
 				description: 'Extract text from scanned documents and photos using OCR',
 			},
 			{
+				name: 'Extract PDF Text & Table',
+				value: 'pdfParsing',
+				description: 'Pull out text, tables, or structured data from any PDF',
+			},
+			{
 				name: 'PDF to Excel / CSV / Word / PowerPoint',
 				value: 'documentConversion',
 				description: 'Convert PDFs into editable formats — Excel, Word, CSV, HTML, PPTX',
 			},
 			{
-				name: 'PDF to Image',
-				value: 'pdfToImage',
-				description: 'Render PDF pages as PNG, JPG, or WebP images',
+				name: 'Merge / Split PDF',
+				value: 'pdfManipulation',
+				description: 'Combine multiple PDFs or split one into parts',
+			},
+			{
+				name: 'Compress PDF',
+				value: 'compressResource',
+				description: 'Shrink PDF file size without losing quality',
 			},
 			{
 				name: 'Protect / Unlock PDF',
@@ -67,14 +58,24 @@ export const resourceProperty: INodeProperties = {
 				description: 'Fetch the fully-rendered HTML of any page — great for SPAs',
 			},
 			{
-				name: 'Screenshot Website to Image',
-				value: 'imageGeneration',
-				description: 'Capture any webpage or HTML as a PNG screenshot',
+				name: 'Images to PDF',
+				value: 'imageToPdf',
+				description: 'Combine JPG, PNG, or WebP images into a single PDF',
 			},
 			{
-				name: 'Sign PDF',
-				value: 'watermark',
-				description: 'Stamp a signature or watermark onto your PDFs',
+				name: 'PDF to Image',
+				value: 'pdfToImage',
+				description: 'Render PDF pages as PNG, JPG, or WebP images',
+			},
+			{
+				name: 'Compare Document',
+				value: 'documentIntelligence',
+				description: 'Check how similar two PDFs or images are',
+			},
+			{
+				name: 'File Management',
+				value: 'fileManagement',
+				description: 'Upload, list, or delete files in your cloud storage',
 			},
 			],
 		default: 'pdfCreation',
@@ -201,18 +202,13 @@ export const operationProperties: INodeProperties[] = [
 				resource: ['documentConversion'],
 			},
 		},
+		// eslint-disable-next-line n8n-nodes-base/node-param-options-type-unsorted-items
 		options: [
 			{
-				name: 'DOCX / Document to PDF',
-				value: 'docxToPdf',
-				description: 'Convert Office-like documents (DOCX, PPTX, XLSX, etc.) to PDF',
-				action: 'Convert a document to PDF',
-			},
-			{
-				name: 'PDF to CSV',
-				value: 'pdfToCsv',
-				description: 'Extract tables and text from PDF into CSV format',
-				action: 'Convert PDF to CSV',
+				name: 'PDF to Excel (XLSX)',
+				value: 'pdfToXlsx',
+				description: 'Extract tables and text from PDF into an Excel spreadsheet — one sheet per page',
+				action: 'Convert pdf to excel',
 			},
 			{
 				name: 'PDF to DOCX',
@@ -221,10 +217,16 @@ export const operationProperties: INodeProperties[] = [
 				action: 'Convert a pdf to docx',
 			},
 			{
-				name: 'PDF to Excel (XLSX)',
-				value: 'pdfToXlsx',
-				description: 'Extract tables and text from PDF into an Excel spreadsheet — one sheet per page',
-				action: 'Convert pdf to excel',
+				name: 'PDF to CSV',
+				value: 'pdfToCsv',
+				description: 'Extract tables and text from PDF into CSV format',
+				action: 'Convert PDF to CSV',
+			},
+			{
+				name: 'PDF to Text',
+				value: 'pdfToTxt',
+				description: 'Extract plain text from all or selected PDF pages',
+				action: 'Convert PDF to plain text',
 			},
 			{
 				name: 'PDF to HTML',
@@ -239,10 +241,10 @@ export const operationProperties: INodeProperties[] = [
 				action: 'Convert pdf to power point',
 			},
 			{
-				name: 'PDF to Text',
-				value: 'pdfToTxt',
-				description: 'Extract plain text from all or selected PDF pages',
-				action: 'Convert PDF to plain text',
+				name: 'DOCX / Document to PDF',
+				value: 'docxToPdf',
+				description: 'Convert Office-like documents (DOCX, PPTX, XLSX, etc.) to PDF',
+				action: 'Convert a document to PDF',
 			},
 		],
 		default: 'docxToPdf',
@@ -329,6 +331,7 @@ export const operationProperties: INodeProperties[] = [
 				resource: ['watermark'],
 			},
 		},
+		// eslint-disable-next-line n8n-nodes-base/node-param-options-type-unsorted-items
 		options: [
 			{
 				name: 'Sign PDF',
