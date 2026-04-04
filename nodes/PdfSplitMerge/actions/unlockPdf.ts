@@ -28,7 +28,6 @@ export const description: INodeProperties[] = [
 		name: 'unlock_url',
 		type: 'string',
 		default: '',
-		required: true,
 		placeholder: 'https://pdfapihub.com/sample.pdf',
 		description: 'Public URL of the password-protected PDF',
 		displayOptions: { show: { operation: ['unlockPdf'], unlock_input_type: ['url'] } },

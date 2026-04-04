@@ -38,7 +38,6 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		typeOptions: { multipleValues: true },
 		default: [],
-		required: true,
 		placeholder: 'https://pdfapihub.com/sample.pdf',
 		description: 'PDF URLs to merge – they are combined in the order listed. Google Drive share links are auto-converted.',
 		displayOptions: { show: { operation: ['mergePdf'], merge_input_type: ['url'] } },

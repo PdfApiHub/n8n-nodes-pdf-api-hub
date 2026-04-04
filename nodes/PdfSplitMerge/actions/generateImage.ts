@@ -10,6 +10,7 @@ export const description: INodeProperties[] = [
 		name: 'image_gen_url',
 		type: 'string',
 		default: '',
+		required: true,
 		description: 'The URL of the website to capture as image',
 		displayOptions: {
 			show: {

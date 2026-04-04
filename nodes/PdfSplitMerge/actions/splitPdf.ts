@@ -28,7 +28,6 @@ export const description: INodeProperties[] = [
 		name: 'url',
 		type: 'string',
 		default: '',
-		required: true,
 		placeholder: 'https://pdfapihub.com/sample.pdf',
 		description: 'Public URL of the PDF to split. Google Drive share links are auto-converted.',
 		displayOptions: { show: { operation: ['splitPdf'], split_input_type: ['url'] } },

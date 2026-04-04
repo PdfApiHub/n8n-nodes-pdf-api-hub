@@ -28,7 +28,6 @@ export const description: INodeProperties[] = [
 		name: 'lock_url',
 		type: 'string',
 		default: '',
-		required: true,
 		placeholder: 'https://pdfapihub.com/sample.pdf',
 		description: 'Public URL of the PDF to encrypt',
 		displayOptions: { show: { operation: ['lockPdf'], lock_input_type: ['url'] } },
