@@ -18,6 +18,7 @@ import * as pdfToDocx from './pdfToDocx';
 import * as pdfToImage from './pdfToImage';
 import * as fetchHtml from './fetchHtml';
 import * as addWatermark from './addWatermark';
+import * as pdfToFormat from './pdfToFormat';
 
 /**
  * Action handler type.
@@ -54,6 +55,7 @@ export const allActionDescriptions: INodeProperties[] = [
 	...parsePdf.description,
 	...pdfOcrParse.description,
 	...pdfToDocx.description,
+	...pdfToFormat.description,
 	...pdfToImage.description,
 	...splitPdf.description,
 	...unlockPdf.description,
@@ -95,6 +97,13 @@ const actionMap: Record<string, ActionHandler> = {
 	// Document conversion
 	docxToPdf: docxToPdf.execute as ActionHandler,
 	pdfToDocx: pdfToDocx.execute as ActionHandler,
+
+	// PDF to other formats
+	pdfToXlsx: pdfToFormat.execute,
+	pdfToCsv: pdfToFormat.execute,
+	pdfToTxt: pdfToFormat.execute,
+	pdfToHtml: pdfToFormat.execute,
+	pdfToPptx: pdfToFormat.execute,
 
 	// PDF to image
 	pdfToPng: pdfToImage.execute,

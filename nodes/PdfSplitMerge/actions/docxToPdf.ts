@@ -1,7 +1,7 @@
-import type { IExecuteFunctions, IDataObject, INodeExecutionData,
+import type { IExecuteFunctions, INodeExecutionData,
 	INodeProperties,
 } from 'n8n-workflow';
-import { normalizeUrl, prepareBinaryResponse, createSingleFileMultipart, parseJsonResponseBody } from '../helpers';
+import { normalizeUrl, prepareBinaryResponse, createSingleFileMultipart, parseJsonResponseBody, checkApiResponse } from '../helpers';
 
 
 export const description: INodeProperties[] = [
@@ -10,12 +10,12 @@ export const description: INodeProperties[] = [
 		name: 'doc2pdf_input_type',
 		type: 'options',
 		options: [
-			{ name: 'URL', value: 'url' },
+			{ name: 'URL (Default)', value: 'url' },
 			{ name: 'Base64', value: 'base64' },
 			{ name: 'File (Binary)', value: 'file' },
 		],
 		default: 'url',
-		description: 'How to provide the source document',
+		description: 'How to provide the source document for conversion',
 		displayOptions: {
 			show: {
 				operation: ['docxToPdf'],
@@ -27,7 +27,7 @@ export const description: INodeProperties[] = [
 		name: 'doc2pdf_url',
 		type: 'string',
 		default: '',
-		description: 'Public URL of the source document',
+		description: 'Public URL of the document to convert (DOCX, PPTX, XLSX, ODT, etc.)',
 		placeholder: 'https://pdfapihub.com/sample.docx',
 		displayOptions: {
 			show: {
@@ -41,7 +41,7 @@ export const description: INodeProperties[] = [
 		name: 'doc2pdf_base64_file',
 		type: 'string',
 		default: '',
-		description: 'Base64 encoded source document',
+		description: 'Base64-encoded content of the source document',
 		displayOptions: {
 			show: {
 				operation: ['docxToPdf'],
@@ -54,7 +54,7 @@ export const description: INodeProperties[] = [
 		name: 'doc2pdf_file_binary_property',
 		type: 'string',
 		default: 'data',
-		description: 'Binary property containing the source document file',
+		description: 'Name of the binary property containing the document file to convert',
 		displayOptions: {
 			show: {
 				operation: ['docxToPdf'],
@@ -67,21 +67,21 @@ export const description: INodeProperties[] = [
 		name: 'doc2pdf_input_format',
 		type: 'options',
 		options: [
-			{ name: 'Auto Detect', value: '' },
-			{ name: 'DOC', value: 'doc' },
-			{ name: 'DOCX', value: 'docx' },
-			{ name: 'ODP', value: 'odp' },
-			{ name: 'ODS', value: 'ods' },
-			{ name: 'ODT', value: 'odt' },
-			{ name: 'PPT', value: 'ppt' },
-			{ name: 'PPTX', value: 'pptx' },
-			{ name: 'RTF', value: 'rtf' },
-			{ name: 'TXT', value: 'txt' },
-			{ name: 'XLS', value: 'xls' },
-			{ name: 'XLSX', value: 'xlsx' },
+			{ name: 'Auto Detect (Default)', value: '', description: 'Automatically detect the file format from the extension or content' },
+			{ name: 'DOC', value: 'doc', description: 'Microsoft Word 97-2003' },
+			{ name: 'DOCX', value: 'docx', description: 'Microsoft Word 2007+' },
+			{ name: 'ODP', value: 'odp', description: 'OpenDocument Presentation' },
+			{ name: 'ODS', value: 'ods', description: 'OpenDocument Spreadsheet' },
+			{ name: 'ODT', value: 'odt', description: 'OpenDocument Text' },
+			{ name: 'PPT', value: 'ppt', description: 'Microsoft PowerPoint 97-2003' },
+			{ name: 'PPTX', value: 'pptx', description: 'Microsoft PowerPoint 2007+' },
+			{ name: 'RTF', value: 'rtf', description: 'Rich Text Format' },
+			{ name: 'TXT', value: 'txt', description: 'Plain Text' },
+			{ name: 'XLS', value: 'xls', description: 'Microsoft Excel 97-2003' },
+			{ name: 'XLSX', value: 'xlsx', description: 'Microsoft Excel 2007+' },
 		],
 		default: '',
-		description: 'Optional source format (recommended for base64 input)',
+		description: 'Source file format — recommended when using Base64 input so the API can parse the file correctly',
 		displayOptions: {
 			show: {
 				operation: ['docxToPdf'],
@@ -93,13 +93,13 @@ export const description: INodeProperties[] = [
 		name: 'doc2pdf_output',
 		type: 'options',
 		options: [
-			{ name: 'URL', value: 'url' },
+			{ name: 'URL (Default)', value: 'url' },
 			{ name: 'Base64', value: 'base64' },
 			{ name: 'Both', value: 'both' },
 			{ name: 'File', value: 'file' },
 		],
 		default: 'url',
-		description: 'Format of the output PDF',
+		description: 'How the converted PDF is returned',
 		displayOptions: {
 			show: {
 				operation: ['docxToPdf'],
@@ -111,7 +111,7 @@ export const description: INodeProperties[] = [
 		name: 'doc2pdf_output_filename',
 		type: 'string',
 		default: 'converted.pdf',
-		description: 'Optional output filename (used for file output)',
+		description: 'Filename for the output PDF (used when output format is File, URL, or Both)',
 		displayOptions: {
 			show: {
 				operation: ['docxToPdf'],
@@ -176,13 +176,21 @@ export async function execute(
 				...requestOptions,
 				encoding: 'arraybuffer',
 				returnFullResponse: true,
+				ignoreHttpStatusErrors: true,
 			},
-		);
+		) as { body: ArrayBuffer; statusCode: number; headers?: Record<string, unknown> };
+
+		if (responseData.statusCode >= 400) {
+			let errorBody: unknown;
+			try { errorBody = JSON.parse(Buffer.from(responseData.body).toString('utf8')); } catch { errorBody = {}; }
+			checkApiResponse(this, responseData.statusCode, errorBody, index);
+		}
+
 		returnData.push(
 			await prepareBinaryResponse.call(
 				this,
 				index,
-				responseData as { body: ArrayBuffer; headers?: Record<string, unknown> },
+				responseData,
 				outputFilename || 'converted.pdf',
 				'application/pdf',
 			),
@@ -195,14 +203,12 @@ export async function execute(
 				method: 'POST',
 				url: 'https://pdfapihub.com/api/v1/convert/document/pdf',
 				...requestOptions,
-				returnFullResponse: inputType === 'file',
+				returnFullResponse: true,
+				ignoreHttpStatusErrors: true,
 			},
-		);
-		if (inputType === 'file') {
-			const responseBody = (responseData as { body?: unknown }).body;
-			returnData.push(parseJsonResponseBody(responseBody, index));
-		} else {
-			returnData.push({ json: responseData as IDataObject, pairedItem: { item: index } });
-		}
+		) as { body: unknown; statusCode: number };
+
+		checkApiResponse(this, responseData.statusCode, responseData.body, index);
+		returnData.push(parseJsonResponseBody(responseData.body, index));
 	}
 }

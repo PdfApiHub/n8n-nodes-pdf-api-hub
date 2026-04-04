@@ -1,7 +1,7 @@
 import type { IExecuteFunctions, IDataObject, INodeExecutionData,
 	INodeProperties,
 } from 'n8n-workflow';
-import { normalizeUrl, prepareBinaryResponse, createSingleFileMultipart } from '../helpers';
+import { normalizeUrl, prepareBinaryResponse, createSingleFileMultipart, parseJsonResponseBody, checkApiResponse } from '../helpers';
 
 
 export const description: INodeProperties[] = [
@@ -10,7 +10,7 @@ export const description: INodeProperties[] = [
 		name: 'pdf2img_input_type',
 		type: 'options',
 		options: [
-			{ name: 'URL', value: 'url' },
+			{ name: 'URL (Default)', value: 'url' },
 			{ name: 'File (Binary)', value: 'file' },
 		],
 		default: 'url',
@@ -26,7 +26,7 @@ export const description: INodeProperties[] = [
 		name: 'pdf2img_url',
 		type: 'string',
 		default: '',
-		description: 'URL of the PDF to convert',
+		description: 'Public URL of the PDF file to convert to image(s)',
 		placeholder: 'https://pdfapihub.com/sample.pdf',
 		displayOptions: {
 			show: {
@@ -40,7 +40,7 @@ export const description: INodeProperties[] = [
 		name: 'pdf2img_file_binary_property',
 		type: 'string',
 		default: 'data',
-		description: 'Binary property containing the PDF file',
+		description: 'Name of the binary property containing the PDF file to convert',
 		displayOptions: {
 			show: {
 				operation: ['pdfToPng', 'pdfToWebp', 'pdfToJpg'],
@@ -53,7 +53,8 @@ export const description: INodeProperties[] = [
 		name: 'pdf2img_pages',
 		type: 'string',
 		default: '1',
-		description: 'Page(s) to convert: single number like "1", range like "1-3", or comma list',
+		description: 'Page(s) to convert — single number like "1", range like "1-3", or comma-separated list like "1,3,5"',
+		placeholder: '1-3,5',
 		displayOptions: {
 			show: {
 				operation: ['pdfToPng', 'pdfToWebp', 'pdfToJpg'],
@@ -65,7 +66,7 @@ export const description: INodeProperties[] = [
 		name: 'pdf2img_dpi',
 		type: 'number',
 		default: 150,
-		description: 'Output image DPI (72-300)',
+		description: 'Output image resolution in dots-per-inch (72–300). Higher values produce sharper but larger images.',
 		displayOptions: {
 			show: {
 				operation: ['pdfToPng', 'pdfToWebp', 'pdfToJpg'],
@@ -77,7 +78,7 @@ export const description: INodeProperties[] = [
 		name: 'pdf2img_quality',
 		type: 'number',
 		default: 85,
-		description: 'Image quality (1-100)',
+		description: 'Image compression quality (1–100). Only affects JPEG and WebP output.',
 		displayOptions: {
 			show: {
 				operation: ['pdfToPng', 'pdfToWebp', 'pdfToJpg'],
@@ -89,18 +90,64 @@ export const description: INodeProperties[] = [
 		name: 'pdf2img_output',
 		type: 'options',
 		options: [
-			{ name: 'URL', value: 'url' },
+			{ name: 'URL (Default)', value: 'url' },
 			{ name: 'Base64', value: 'base64' },
 			{ name: 'Both', value: 'both' },
 			{ name: 'File', value: 'file' },
 		],
 		default: 'url',
-		description: 'Format of the output',
+		description: 'How the converted image(s) are returned',
 		displayOptions: {
 			show: {
 				operation: ['pdfToPng', 'pdfToWebp', 'pdfToJpg'],
 			},
 		},
+	},
+{
+		displayName: 'Advanced Options',
+		name: 'pdf2img_advanced',
+		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
+		displayOptions: {
+			show: {
+				operation: ['pdfToPng', 'pdfToWebp', 'pdfToJpg'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Width',
+				name: 'width',
+				type: 'number',
+				default: 0,
+				description: 'Resize the output image to this width in pixels. 0 = keep original size.',
+				placeholder: '800',
+			},
+			{
+				displayName: 'Height',
+				name: 'height',
+				type: 'number',
+				default: 0,
+				description: 'Resize the output image to this height in pixels. 0 = keep original size.',
+				placeholder: '600',
+			},
+			{
+				displayName: 'Background Color',
+				name: 'background_color',
+				type: 'string',
+				default: '',
+				description: 'Hex color to use as background for transparent PNGs (e.g. #FFFFFF for white)',
+				placeholder: '#FFFFFF',
+			},
+			{
+				displayName: 'Output Filename',
+				name: 'output_filename',
+				type: 'string',
+				default: '',
+				description: 'Custom filename for the output image (without extension)',
+				placeholder: 'my-page',
+			},
+		],
 	},
 ];
 
@@ -116,6 +163,7 @@ export async function execute(
 	const dpi = this.getNodeParameter('pdf2img_dpi', index) as number;
 	const quality = this.getNodeParameter('pdf2img_quality', index) as number;
 	const outputFormat = this.getNodeParameter('pdf2img_output', index) as string;
+	const advanced = this.getNodeParameter('pdf2img_advanced', index, {}) as IDataObject;
 
 	const imageFormatMap: Record<string, string> = {
 		pdfToPng: 'png',
@@ -134,6 +182,12 @@ export async function execute(
 	if (pdf2imgInputType === 'url') {
 		body.url = normalizeUrl(pdfUrl);
 	}
+
+	// Advanced options
+	if (advanced.width && (advanced.width as number) > 0) body.width = advanced.width;
+	if (advanced.height && (advanced.height as number) > 0) body.height = advanced.height;
+	if (advanced.background_color) body.background_color = advanced.background_color;
+	if (advanced.output_filename) body.output_filename = advanced.output_filename;
 
 	if (outputFormat === 'file') {
 		const requestOptions =
@@ -154,14 +208,22 @@ export async function execute(
 				...requestOptions,
 				encoding: 'arraybuffer',
 				returnFullResponse: true,
+				ignoreHttpStatusErrors: true,
 			},
-		);
+		) as { body: ArrayBuffer; statusCode: number; headers?: Record<string, unknown> };
+
+		if (responseData.statusCode >= 400) {
+			let errorBody: unknown;
+			try { errorBody = JSON.parse(Buffer.from(responseData.body).toString('utf8')); } catch { errorBody = {}; }
+			checkApiResponse(this, responseData.statusCode, errorBody, index);
+		}
+
 		const mimeType = imageFormat === 'png' ? 'image/png' : imageFormat === 'webp' ? 'image/webp' : 'image/jpeg';
 		returnData.push(
 			await prepareBinaryResponse.call(
 				this,
 				index,
-				responseData as { body: ArrayBuffer; headers?: Record<string, unknown> },
+				responseData,
 				`output.${imageFormat}`,
 				mimeType,
 			),
@@ -183,14 +245,12 @@ export async function execute(
 				method: 'POST',
 				url: 'https://pdfapihub.com/api/v1/convert/pdf/image',
 				...requestOptions,
-				returnFullResponse: pdf2imgInputType === 'file',
+				returnFullResponse: true,
+				ignoreHttpStatusErrors: true,
 			},
-		);
-		if (pdf2imgInputType === 'file') {
-			const responseBody = (responseData as { body?: unknown }).body;
-			returnData.push({ json: (responseBody ?? {}) as IDataObject, pairedItem: { item: index } });
-		} else {
-			returnData.push({ json: responseData as IDataObject, pairedItem: { item: index } });
-		}
+		) as { body: unknown; statusCode: number };
+
+		checkApiResponse(this, responseData.statusCode, responseData.body, index);
+		returnData.push(parseJsonResponseBody(responseData.body, index));
 	}
 }

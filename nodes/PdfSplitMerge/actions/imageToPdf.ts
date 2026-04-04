@@ -1,8 +1,8 @@
-import type { IExecuteFunctions, IDataObject, INodeExecutionData,
+import type { IExecuteFunctions, INodeExecutionData,
 	INodeProperties,
 } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import { normalizeUrl, prepareBinaryResponse } from '../helpers';
+import { normalizeUrl, prepareBinaryResponse, parseJsonResponseBody, checkApiResponse } from '../helpers';
 
 
 export const description: INodeProperties[] = [
@@ -11,12 +11,12 @@ export const description: INodeProperties[] = [
 		name: 'img2pdf_input_type',
 		type: 'options',
 		options: [
-			{ name: 'URL(s)', value: 'url' },
+			{ name: 'URL(s) (Default)', value: 'url' },
 			{ name: 'Base64', value: 'base64' },
 			{ name: 'File (Binary)', value: 'file' },
 		],
 		default: 'url',
-		description: 'How to provide the image(s)',
+		description: 'How to provide the image(s) to convert into a PDF',
 		displayOptions: {
 			show: {
 				operation: ['pngToPdf', 'webpToPdf', 'jpgToPdf'],
@@ -31,7 +31,7 @@ export const description: INodeProperties[] = [
 			multipleValues: true,
 		},
 		default: [],
-		description: 'Array of image URLs to convert (max 100)',
+		description: 'One or more public PNG image URLs to convert (max 100)',
 		placeholder: 'https://pdfapihub.com/sample.png',
 		displayOptions: {
 			show: {
@@ -48,7 +48,7 @@ export const description: INodeProperties[] = [
 			multipleValues: true,
 		},
 		default: [],
-		description: 'Array of image URLs to convert (max 100)',
+		description: 'One or more public WebP image URLs to convert (max 100)',
 		placeholder: 'https://pdfapihub.com/sample.webp',
 		displayOptions: {
 			show: {
@@ -65,7 +65,7 @@ export const description: INodeProperties[] = [
 			multipleValues: true,
 		},
 		default: [],
-		description: 'Array of image URLs to convert (max 100)',
+		description: 'One or more public JPEG image URLs to convert (max 100)',
 		placeholder: 'https://pdfapihub.com/sample.jpg',
 		displayOptions: {
 			show: {
@@ -82,7 +82,7 @@ export const description: INodeProperties[] = [
 			multipleValues: true,
 		},
 		default: [],
-		description: 'Base64 image payload(s)',
+		description: 'Base64-encoded image payload(s) — each entry becomes a page in the PDF',
 		displayOptions: {
 			show: {
 				operation: ['pngToPdf', 'webpToPdf', 'jpgToPdf'],
@@ -98,7 +98,7 @@ export const description: INodeProperties[] = [
 			multipleValues: true,
 		},
 		default: ['data'],
-		description: 'Binary property names containing images to convert',
+		description: 'Names of binary properties containing image files to convert',
 		displayOptions: {
 			show: {
 				operation: ['pngToPdf', 'webpToPdf', 'jpgToPdf'],
@@ -107,17 +107,91 @@ export const description: INodeProperties[] = [
 		},
 	},
 {
+		displayName: 'Page Size',
+		name: 'img2pdf_page_size',
+		type: 'options',
+		options: [
+			{ name: 'Original (Default)', value: 'original', description: 'Use the native image dimensions' },
+			{ name: 'A3', value: 'A3', description: '297 × 420 mm' },
+			{ name: 'A4', value: 'A4', description: '210 × 297 mm' },
+			{ name: 'A5', value: 'A5', description: '148 × 210 mm' },
+			{ name: 'Letter', value: 'Letter', description: '8.5 × 11 in' },
+			{ name: 'Legal', value: 'Legal', description: '8.5 × 14 in' },
+			{ name: 'Tabloid', value: 'Tabloid', description: '11 × 17 in' },
+		],
+		default: 'original',
+		description: 'PDF page size — "Original" keeps image dimensions as-is',
+		displayOptions: {
+			show: {
+				operation: ['pngToPdf', 'webpToPdf', 'jpgToPdf'],
+			},
+		},
+	},
+{
+		displayName: 'Orientation',
+		name: 'img2pdf_orientation',
+		type: 'options',
+		options: [
+			{ name: 'Portrait (Default)', value: 'portrait' },
+			{ name: 'Landscape', value: 'landscape' },
+		],
+		default: 'portrait',
+		description: 'Page orientation for the output PDF',
+		displayOptions: {
+			show: {
+				operation: ['pngToPdf', 'webpToPdf', 'jpgToPdf'],
+			},
+			hide: {
+				img2pdf_page_size: ['original'],
+			},
+		},
+	},
+{
+		displayName: 'Fit Mode',
+		name: 'img2pdf_fit_mode',
+		type: 'options',
+		options: [
+			{ name: 'Fit (Default)', value: 'fit', description: 'Scale image to fit within the page, preserving aspect ratio' },
+			{ name: 'Fill', value: 'fill', description: 'Scale image to fill the page, cropping any overflow' },
+			{ name: 'Stretch', value: 'stretch', description: 'Stretch image to exactly fill the page (may distort)' },
+			{ name: 'Original', value: 'original', description: 'Keep original image size, center on page' },
+		],
+		default: 'fit',
+		description: 'How the image is placed within each PDF page',
+		displayOptions: {
+			show: {
+				operation: ['pngToPdf', 'webpToPdf', 'jpgToPdf'],
+			},
+		},
+	},
+{
+		displayName: 'Margin (Points)',
+		name: 'img2pdf_margin',
+		type: 'number',
+		default: 0,
+		description: 'Uniform page margin in points (0–200). 72 points = 1 inch.',
+		typeOptions: {
+			minValue: 0,
+			maxValue: 200,
+		},
+		displayOptions: {
+			show: {
+				operation: ['pngToPdf', 'webpToPdf', 'jpgToPdf'],
+			},
+		},
+	},
+{
 		displayName: 'Output Format',
 		name: 'img2pdf_output',
 		type: 'options',
 		options: [
-			{ name: 'URL', value: 'url' },
+			{ name: 'URL (Default)', value: 'url' },
 			{ name: 'Base64', value: 'base64' },
 			{ name: 'Both', value: 'both' },
 			{ name: 'File', value: 'file' },
 		],
 		default: 'url',
-		description: 'Format of the output PDF',
+		description: 'How the converted PDF is returned',
 		displayOptions: {
 			show: {
 				operation: ['pngToPdf', 'webpToPdf', 'jpgToPdf'],
@@ -129,7 +203,7 @@ export const description: INodeProperties[] = [
 		name: 'img2pdf_output_filename',
 		type: 'string',
 		default: 'converted.pdf',
-		description: 'Filename for the output PDF',
+		description: 'Filename for the output PDF file',
 		displayOptions: {
 			show: {
 				operation: ['pngToPdf', 'webpToPdf', 'jpgToPdf'],
@@ -147,10 +221,23 @@ export async function execute(
 	const inputType = this.getNodeParameter('img2pdf_input_type', index) as string;
 	const outputFormat = this.getNodeParameter('img2pdf_output', index) as string;
 	const outputFilename = this.getNodeParameter('img2pdf_output_filename', index) as string;
+	const pageSize = this.getNodeParameter('img2pdf_page_size', index, 'original') as string;
+	const fitMode = this.getNodeParameter('img2pdf_fit_mode', index, 'fit') as string;
+	const margin = this.getNodeParameter('img2pdf_margin', index, 0) as number;
 
 	let multipartBody: Buffer | undefined;
 	let multipartBoundary: string | undefined;
 	let body: Record<string, unknown> | undefined;
+
+	/* ── build extra fields map (used by both multipart and JSON paths) ── */
+	const extraFields: Record<string, string | number> = {};
+	if (pageSize !== 'original') {
+		extraFields.page_size = pageSize;
+		const orientation = this.getNodeParameter('img2pdf_orientation', index, 'portrait') as string;
+		if (orientation !== 'portrait') extraFields.orientation = orientation;
+	}
+	if (fitMode !== 'fit') extraFields.fit_mode = fitMode;
+	if (margin > 0) extraFields.margin = margin;
 
 	if (inputType === 'file') {
 		const binaryPropertyNamesParam = this.getNodeParameter('img2pdf_binary_properties', index) as unknown;
@@ -190,22 +277,18 @@ export async function execute(
 			parts.push(Buffer.from('\r\n'));
 		}
 
-		parts.push(
-			Buffer.from(
-				`--${multipartBoundary}\r\n` +
-					'Content-Disposition: form-data; name="output"\r\n\r\n' +
-					`${outputFormat}\r\n`,
-			),
-		);
-		if (outputFilename) {
+		// standard fields
+		for (const [key, val] of Object.entries({ output: outputFormat, output_filename: outputFilename, ...extraFields })) {
+			if (val === undefined || val === '') continue;
 			parts.push(
 				Buffer.from(
 					`--${multipartBoundary}\r\n` +
-						'Content-Disposition: form-data; name="output_filename"\r\n\r\n' +
-						`${outputFilename}\r\n`,
+						`Content-Disposition: form-data; name="${key}"\r\n\r\n` +
+						`${val}\r\n`,
 				),
 			);
 		}
+
 		parts.push(Buffer.from(`--${multipartBoundary}--\r\n`));
 		multipartBody = Buffer.concat(parts);
 	} else if (inputType === 'url') {
@@ -216,12 +299,12 @@ export async function execute(
 					? (this.getNodeParameter('img2pdf_urls_webp', index) as string[])
 					: (this.getNodeParameter('img2pdf_urls_jpg', index) as string[])
 		).map(normalizeUrl);
-		body = { urls, output: outputFormat, output_filename: outputFilename };
+		body = { urls, output: outputFormat, output_filename: outputFilename, ...extraFields };
 	} else {
 		const base64Images = this.getNodeParameter('img2pdf_base64', index) as string[];
 		body = base64Images.length === 1
-			? { image_base64: base64Images[0], output: outputFormat, output_filename: outputFilename }
-			: { images_base64: base64Images, output: outputFormat, output_filename: outputFilename };
+			? { image_base64: base64Images[0], output: outputFormat, output_filename: outputFilename, ...extraFields }
+			: { images_base64: base64Images, output: outputFormat, output_filename: outputFilename, ...extraFields };
 	}
 
 	if (outputFormat === 'file') {
@@ -239,13 +322,21 @@ export async function execute(
 					: { body, json: true }),
 				encoding: 'arraybuffer',
 				returnFullResponse: true,
+				ignoreHttpStatusErrors: true,
 			},
-		);
+		) as { body: ArrayBuffer; statusCode: number; headers?: Record<string, unknown> };
+
+		if (responseData.statusCode >= 400) {
+			let errorBody: unknown;
+			try { errorBody = JSON.parse(Buffer.from(responseData.body).toString('utf8')); } catch { errorBody = {}; }
+			checkApiResponse(this, responseData.statusCode, errorBody, index);
+		}
+
 		returnData.push(
 			await prepareBinaryResponse.call(
 				this,
 				index,
-				responseData as { body: ArrayBuffer; headers?: Record<string, unknown> },
+				responseData,
 				outputFilename || 'converted.pdf',
 				'application/pdf',
 			),
@@ -263,8 +354,12 @@ export async function execute(
 							headers: { 'Content-Type': `multipart/form-data; boundary=${multipartBoundary}` },
 						}
 					: { body, json: true }),
+				returnFullResponse: true,
+				ignoreHttpStatusErrors: true,
 			},
-		);
-		returnData.push({ json: responseData as IDataObject, pairedItem: { item: index } });
+		) as { body: unknown; statusCode: number };
+
+		checkApiResponse(this, responseData.statusCode, responseData.body, index);
+		returnData.push(parseJsonResponseBody(responseData.body, index));
 	}
 }

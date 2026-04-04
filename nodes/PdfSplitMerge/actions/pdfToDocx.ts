@@ -1,7 +1,7 @@
-import type { IExecuteFunctions, IDataObject, INodeExecutionData,
+import type { IExecuteFunctions, INodeExecutionData,
 	INodeProperties,
 } from 'n8n-workflow';
-import { normalizeUrl, prepareBinaryResponse, createSingleFileMultipart, parseJsonResponseBody } from '../helpers';
+import { normalizeUrl, prepareBinaryResponse, createSingleFileMultipart, parseJsonResponseBody, checkApiResponse } from '../helpers';
 
 
 export const description: INodeProperties[] = [
@@ -10,12 +10,12 @@ export const description: INodeProperties[] = [
 		name: 'pdf2docx_input_type',
 		type: 'options',
 		options: [
-			{ name: 'URL', value: 'url' },
+			{ name: 'URL (Default)', value: 'url' },
 			{ name: 'Base64', value: 'base64' },
 			{ name: 'File (Binary)', value: 'file' },
 		],
 		default: 'url',
-		description: 'How to provide the source PDF',
+		description: 'How to provide the source PDF for conversion to DOCX',
 		displayOptions: {
 			show: {
 				operation: ['pdfToDocx'],
@@ -27,7 +27,7 @@ export const description: INodeProperties[] = [
 		name: 'pdf2docx_url',
 		type: 'string',
 		default: '',
-		description: 'Public URL of the source PDF',
+		description: 'Public URL of the PDF file to convert to DOCX',
 		placeholder: 'https://pdfapihub.com/sample.pdf',
 		displayOptions: {
 			show: {
@@ -41,7 +41,7 @@ export const description: INodeProperties[] = [
 		name: 'pdf2docx_base64_file',
 		type: 'string',
 		default: '',
-		description: 'Base64 encoded PDF',
+		description: 'Base64-encoded content of the source PDF',
 		displayOptions: {
 			show: {
 				operation: ['pdfToDocx'],
@@ -54,7 +54,7 @@ export const description: INodeProperties[] = [
 		name: 'pdf2docx_file_binary_property',
 		type: 'string',
 		default: 'data',
-		description: 'Binary property containing the source PDF file',
+		description: 'Name of the binary property containing the PDF file to convert',
 		displayOptions: {
 			show: {
 				operation: ['pdfToDocx'],
@@ -63,17 +63,30 @@ export const description: INodeProperties[] = [
 		},
 	},
 {
+		displayName: 'Pages',
+		name: 'pdf2docx_pages',
+		type: 'string',
+		default: '',
+		description: 'Page(s) to convert — single number like "1", range like "1-3", or comma-separated list like "1-3,5". Leave empty to convert all pages.',
+		placeholder: '1-3,5',
+		displayOptions: {
+			show: {
+				operation: ['pdfToDocx'],
+			},
+		},
+	},
+{
 		displayName: 'Output Format',
 		name: 'pdf2docx_output',
 		type: 'options',
 		options: [
-			{ name: 'URL', value: 'url' },
+			{ name: 'URL (Default)', value: 'url' },
 			{ name: 'Base64', value: 'base64' },
 			{ name: 'Both', value: 'both' },
 			{ name: 'File', value: 'file' },
 		],
 		default: 'url',
-		description: 'Format of the output DOCX',
+		description: 'How the converted DOCX is returned',
 		displayOptions: {
 			show: {
 				operation: ['pdfToDocx'],
@@ -85,7 +98,7 @@ export const description: INodeProperties[] = [
 		name: 'pdf2docx_output_filename',
 		type: 'string',
 		default: 'converted.docx',
-		description: 'Optional output filename (used for file output)',
+		description: 'Filename for the output DOCX file',
 		displayOptions: {
 			show: {
 				operation: ['pdfToDocx'],
@@ -102,18 +115,22 @@ export async function execute(
 	const inputType = this.getNodeParameter('pdf2docx_input_type', index) as string;
 	const outputFormat = this.getNodeParameter('pdf2docx_output', index) as string;
 	const outputFilename = this.getNodeParameter('pdf2docx_output_filename', index) as string;
+	const pages = (this.getNodeParameter('pdf2docx_pages', index, '') as string).trim();
 
 	let requestOptions: Record<string, unknown>;
 
 	if (inputType === 'file') {
+		const fields: Record<string, string | number | boolean> = {
+			output: outputFormat,
+			output_filename: outputFilename,
+		};
+		if (pages) fields.pages = pages;
+
 		requestOptions = await createSingleFileMultipart.call(
 			this,
 			index,
 			this.getNodeParameter('pdf2docx_file_binary_property', index) as string,
-			{
-				output: outputFormat,
-				output_filename: outputFilename,
-			},
+			fields,
 		);
 	} else {
 		const body: Record<string, unknown> = {
@@ -126,6 +143,8 @@ export async function execute(
 		} else {
 			body.file = this.getNodeParameter('pdf2docx_base64_file', index) as string;
 		}
+
+		if (pages) body.pages = pages;
 
 		requestOptions = { body, json: true };
 	}
@@ -140,13 +159,21 @@ export async function execute(
 				...requestOptions,
 				encoding: 'arraybuffer',
 				returnFullResponse: true,
+				ignoreHttpStatusErrors: true,
 			},
-		);
+		) as { body: ArrayBuffer; statusCode: number; headers?: Record<string, unknown> };
+
+		if (responseData.statusCode >= 400) {
+			let errorBody: unknown;
+			try { errorBody = JSON.parse(Buffer.from(responseData.body).toString('utf8')); } catch { errorBody = {}; }
+			checkApiResponse(this, responseData.statusCode, errorBody, index);
+		}
+
 		returnData.push(
 			await prepareBinaryResponse.call(
 				this,
 				index,
-				responseData as { body: ArrayBuffer; headers?: Record<string, unknown> },
+				responseData,
 				outputFilename || 'converted.docx',
 				'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 			),
@@ -159,14 +186,12 @@ export async function execute(
 				method: 'POST',
 				url: 'https://pdfapihub.com/api/v1/convert/pdf/docx',
 				...requestOptions,
-				returnFullResponse: inputType === 'file',
+				returnFullResponse: true,
+				ignoreHttpStatusErrors: true,
 			},
-		);
-		if (inputType === 'file') {
-			const responseBody = (responseData as { body?: unknown }).body;
-			returnData.push(parseJsonResponseBody(responseBody, index));
-		} else {
-			returnData.push({ json: responseData as IDataObject, pairedItem: { item: index } });
-		}
+		) as { body: unknown; statusCode: number };
+
+		checkApiResponse(this, responseData.statusCode, responseData.body, index);
+		returnData.push(parseJsonResponseBody(responseData.body, index));
 	}
 }
