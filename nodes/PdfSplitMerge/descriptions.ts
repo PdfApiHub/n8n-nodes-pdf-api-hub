@@ -7,72 +7,77 @@ export const resourceProperty: INodeProperties = {
 		noDataExpression: true,
 		options: [
 			{
-				name: 'Capture HTML to PDF',
+				name: '1. HTML / URL to PDF',
 				value: 'pdfCreation',
-				description: 'Capture a website screenshot to PDF or render HTML/CSS to PDF',
+				description: 'Turn any webpage or HTML into a polished PDF',
 			},
 			{
-				name: 'Scrape Website HTML',
-				value: 'urlToHtml',
-				description: 'Scrape the fully-rendered HTML of any webpage using a headless browser (great for JS-heavy or SPA pages)',
-			},
-			{
-				name: 'Convert Images to PDF',
-				value: 'imageToPdf',
-				description: 'Convert images (PNG, WebP, JPG) to PDF',
-			},
-			{
-				name: 'Convert PDF to Image',
-				value: 'pdfToImage',
-				description: 'Convert PDF pages to images (PNG, WebP)',
-			},
-			{
-				name: 'Create Image From HTML / Website',
-				value: 'imageGeneration',
-				description: 'Capture a website screenshot to image or render HTML/CSS to image',
-			},
-			{
-				name: 'Document Conversion',
-				value: 'documentConversion',
-				description: 'Convert DOCX/Office documents to PDF and PDF to DOCX',
-			},
-			{
-				name: 'Document Intelligence',
-				value: 'documentIntelligence',
-				description: 'Compare similarity between two image/PDF documents',
-			},
-			{
-				name: 'Extract OCR Text (PDF/Image)',
-				value: 'ocrParsing',
-				description: 'Extract searchable text from scanned PDFs/images',
-			},
-			{
-				name: 'Extract PDF Text / Data',
-				value: 'pdfParsing',
-				description: 'Extract text or structured data from PDFs',
-			},
-			{
-				name: 'Manage PDF (Merge / Split / Compress)',
-				value: 'pdfManipulation',
-				description: 'Merge, split, or compress PDF documents',
-			},
-			{
-				name: 'Protect PDF (Lock / Unlock)',
-				value: 'pdfSecurity',
-				description: 'Lock and unlock password-protected PDFs',
-			},
-			{
-				name: 'Watermark & Sign PDF',
+				name: '2. Sign PDF',
 				value: 'watermark',
-				description: 'Add text/image watermarks or stamp signatures onto PDFs and images',
+				description: 'Stamp a signature or watermark onto your PDFs',
 			},
 			{
-				name: 'File Management',
+				name: '3. Screenshot Website to Image',
+				value: 'imageGeneration',
+				description: 'Capture any webpage or HTML as a PNG screenshot',
+			},
+			{
+				name: '4. OCR — Read Scanned PDFs & Images',
+				value: 'ocrParsing',
+				description: 'Extract text from scanned documents and photos using OCR',
+			},
+			{
+				name: '5. Extract PDF Text & Tables',
+				value: 'pdfParsing',
+				description: 'Pull out text, tables, or structured data from any PDF',
+			},
+			{
+				name: '6. PDF to Excel / CSV / Word / PowerPoint',
+				value: 'documentConversion',
+				description: 'Convert PDFs into editable formats — Excel, Word, CSV, HTML, PPTX',
+			},
+			{
+				name: '7. Merge / Split PDF',
+				value: 'pdfManipulation',
+				description: 'Combine multiple PDFs or split one into parts',
+			},
+			{
+				name: '8. Compress PDF',
+				value: 'compressResource',
+				description: 'Shrink PDF file size without losing quality',
+			},
+			{
+				name: '9. Protect / Unlock PDF',
+				value: 'pdfSecurity',
+				description: 'Add or remove password protection on PDFs',
+			},
+			{
+				name: '10. Scrape Website HTML',
+				value: 'urlToHtml',
+				description: 'Fetch the fully-rendered HTML of any page — great for SPAs',
+			},
+			{
+				name: '11. Images to PDF',
+				value: 'imageToPdf',
+				description: 'Combine JPG, PNG, or WebP images into a single PDF',
+			},
+			{
+				name: '12. PDF to Image',
+				value: 'pdfToImage',
+				description: 'Render PDF pages as PNG, JPG, or WebP images',
+			},
+			{
+				name: '13. Compare Documents',
+				value: 'documentIntelligence',
+				description: 'Check how similar two PDFs or images are',
+			},
+			{
+				name: '14. File Management',
 				value: 'fileManagement',
-				description: 'Upload, list, and delete files in your cloud storage',
-			}
+				description: 'Upload, list, or delete files in your cloud storage',
+			},
 			],
-		default: 'pdfParsing',
+		default: 'pdfCreation',
 	};
 
 export const operationProperties: INodeProperties[] = [
@@ -326,19 +331,19 @@ export const operationProperties: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Add Watermark',
-				value: 'addWatermark',
-				description: 'Add text or image watermark to every page of a PDF or image',
-				action: 'Add watermark to PDF or image',
-			},
-			{
 				name: 'Sign PDF',
 				value: 'signPdf',
-				description: 'Stamp a signature image onto one or all pages of a PDF',
+				description: 'Stamp a signature image onto one or all pages',
 				action: 'Sign a PDF with a signature image',
 			},
+			{
+				name: 'Add Watermark',
+				value: 'addWatermark',
+				description: 'Overlay text or a logo across every page',
+				action: 'Add watermark to PDF or image',
+			},
 		],
-		default: 'addWatermark',
+		default: 'signPdf',
 	},
 {
 		displayName: 'Operation',
@@ -354,23 +359,43 @@ export const operationProperties: INodeProperties[] = [
 			{
 				name: 'Merge PDF',
 				value: 'mergePdf',
-				description: 'Merge multiple PDFs into a single PDF',
-				action: 'Merge multiple pdfs into a single pdf',
+				description: 'Combine multiple PDFs into one document',
+				action: 'Merge multiple PDFs into one',
 			},
 			{
 				name: 'Split PDF',
 				value: 'splitPdf',
-				description: 'Split a PDF into multiple files',
-				action: 'Split a PDF into multiple files',
+				description: 'Split a PDF into separate pages or chunks',
+				action: 'Split a PDF into parts',
 			},
 			{
 				name: 'Compress PDF',
 				value: 'compressPdf',
-				description: 'Compress a PDF to reduce file size',
-				action: 'Reduce size of pdf file',
+				description: 'Reduce PDF file size — choose from low to max compression',
+				action: 'Compress a PDF file',
 			},
 		],
 		default: 'mergePdf',
+	},
+{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['compressResource'],
+			},
+		},
+		options: [
+			{
+				name: 'Compress PDF',
+				value: 'compressPdf',
+				description: 'Reduce PDF file size — choose from low to max compression',
+				action: 'Compress a PDF file',
+			},
+		],
+		default: 'compressPdf',
 	},
 {
 		displayName: 'Operation',
