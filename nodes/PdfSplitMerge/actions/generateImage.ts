@@ -1,228 +1,241 @@
-import type { IExecuteFunctions, INodeExecutionData,
+import type {
+	IExecuteFunctions,
+	INodeExecutionData,
 	INodeProperties,
 } from 'n8n-workflow';
-import { normalizeUrl, prepareBinaryResponse } from '../helpers';
+import { normalizeUrl, prepareBinaryResponse, checkApiResponse } from '../helpers';
 
+/* ================================================================
+ *  Field descriptions – Generate Image (URL → PNG / HTML → PNG)
+ * ================================================================ */
 
 export const description: INodeProperties[] = [
-{
+	// ─── 1. Source: URL ─────────────────────────────────────────────
+	{
 		displayName: 'URL',
 		name: 'image_gen_url',
 		type: 'string',
 		default: '',
 		required: true,
-		description: 'The URL of the website to capture as image',
-		displayOptions: {
-			show: {
-				operation: ['urlToImage'],
-			},
-		},
+		placeholder: 'https://example.com/',
+		description: 'Full URL of the webpage to screenshot (https:// is added automatically if omitted)',
+		displayOptions: { show: { operation: ['urlToImage'] } },
 	},
-{
+
+	// ─── 1. Source: HTML ────────────────────────────────────────────
+	{
 		displayName: 'HTML Content',
 		name: 'image_html_content',
 		type: 'string',
+		typeOptions: { rows: 6 },
 		default: '',
-		description: 'HTML content to render as image',
-		displayOptions: {
-			show: {
-				operation: ['htmlToImage'],
-			},
-		},
+		required: true,
+		placeholder: '<div style="padding:40px;background:#4F46E5;color:white"><h1>Hello World</h1></div>',
+		description: 'HTML to render as an image. Supports {{placeholder}} syntax when combined with Dynamic Params.',
+		displayOptions: { show: { operation: ['htmlToImage'] } },
 	},
-{
-		displayName: 'CSS Content',
+	{
+		displayName: 'CSS Content (Optional)',
 		name: 'image_css_content',
 		type: 'string',
+		typeOptions: { rows: 3 },
 		default: '',
-		description: 'CSS to style the HTML',
-		displayOptions: {
-			show: {
-				operation: ['htmlToImage'],
-			},
-		},
+		placeholder: 'h1 { font-size: 48px; color: blue; }',
+		description: 'Optional CSS injected after the HTML before rendering',
+		displayOptions: { show: { operation: ['htmlToImage'] } },
 	},
-{
+	{
+		displayName: 'Load Google Fonts',
+		name: 'image_font',
+		type: 'string',
+		default: '',
+		placeholder: 'Inter|Roboto',
+		description: 'Google Font name(s) to load — use | as separator. Your HTML/CSS must reference them via font-family. <a href="https://pdfapihub.com/request-more-fonts" target="_blank">Request more fonts</a>.',
+		displayOptions: { show: { operation: ['htmlToImage'] } },
+	},
+
+	// ─── 2. Output ──────────────────────────────────────────────────
+	{
 		displayName: 'Output Format',
 		name: 'image_output_format',
 		type: 'options',
 		options: [
-			{ name: 'URL', value: 'url' },
-			{ name: 'Base64', value: 'base64' },
-			{ name: 'Both', value: 'both' },
-			{ name: 'File', value: 'file' },
+			{ name: 'URL (Hosted Link) (Default)', value: 'url', description: 'Returns a downloadable URL — file hosted for 30 days' },
+			{ name: 'Base64 (Inline Data)', value: 'base64', description: 'Returns the PNG as a base64 string inside JSON' },
+			{ name: 'Both (URL + Base64)', value: 'both', description: 'Returns both URL and base64 in one response' },
+			{ name: 'Binary File (Download)', value: 'file', description: 'Returns raw PNG binary — great for piping into other nodes' },
 		],
 		default: 'url',
-		description: 'Format of the output image',
-		displayOptions: {
-			show: {
-				operation: ['htmlToImage', 'urlToImage'],
-			},
-		},
+		description: 'How the generated image is returned',
+		displayOptions: { show: { operation: ['htmlToImage', 'urlToImage'] } },
 	},
-{
-		displayName: 'Width',
+
+	// ─── 3. Image Size (HTML only) ─────────────────────────────────
+	{
+		displayName: 'Image Width (px)',
 		name: 'image_width',
 		type: 'number',
 		default: 1280,
+		typeOptions: { minValue: 1 },
 		description: 'Width of the output image in pixels',
-		displayOptions: {
-			show: {
-				operation: ['htmlToImage', 'urlToImage'],
-			},
-		},
+		displayOptions: { show: { operation: ['htmlToImage'] } },
 	},
-{
-		displayName: 'Height',
+	{
+		displayName: 'Image Height (px)',
 		name: 'image_height',
 		type: 'number',
 		default: 720,
+		typeOptions: { minValue: 1 },
 		description: 'Height of the output image in pixels',
-		displayOptions: {
-			show: {
-				operation: ['htmlToImage', 'urlToImage'],
-			},
-		},
+		displayOptions: { show: { operation: ['htmlToImage'] } },
 	},
-{
-		displayName: 'Viewport Width',
-		name: 'image_viewport_width',
-		type: 'number',
-		default: 1920,
-		description: 'Viewport width for rendering',
-		displayOptions: {
-			show: {
-				operation: ['htmlToImage', 'urlToImage'],
-			},
-		},
-	},
-{
-		displayName: 'Viewport Height',
-		name: 'image_viewport_height',
-		type: 'number',
-		default: 1080,
-		description: 'Viewport height for rendering',
-		displayOptions: {
-			show: {
-				operation: ['htmlToImage', 'urlToImage'],
-			},
-		},
-	},
-{
-		displayName: 'Device Scale Factor',
-		name: 'image_device_scale',
-		type: 'number',
-		default: 1,
-		description: 'Device scale factor for higher resolution (1-3)',
-		displayOptions: {
-			show: {
-				operation: ['htmlToImage', 'urlToImage'],
-			},
-		},
-	},
-{
-		displayName: 'Quality',
-		name: 'image_quality',
-		type: 'number',
-		default: 80,
-		description: 'Image quality (30-100)',
-		displayOptions: {
-			show: {
-				operation: ['htmlToImage', 'urlToImage'],
-			},
-		},
-	},
-{
+
+	// ─── 4. URL-specific options ────────────────────────────────────
+	{
 		displayName: 'Full Page',
 		name: 'image_full_page',
 		type: 'boolean',
 		default: false,
-		description: 'Whether to capture the full page (for URLs only)',
-		displayOptions: {
-			show: {
-				operation: ['urlToImage'],
-			},
-		},
+		description: 'Whether to capture the full scrollable page instead of just the viewport',
+		displayOptions: { show: { operation: ['urlToImage'] } },
 	},
-{
-		displayName: 'Wait Time (Seconds)',
-		name: 'image_wait_till',
-		type: 'number',
-		default: 0,
-		description: 'Time to wait in seconds before capturing',
-		displayOptions: {
-			show: {
-				operation: ['urlToImage'],
-			},
-		},
+	{
+		displayName: 'Cookie Accept Text',
+		name: 'image_cookie_accept_text',
+		type: 'string',
+		default: 'Accept ALL',
+		placeholder: 'Accept All Cookies',
+		description: 'Text of the cookie-consent button to auto-click before capture. Change if the site uses different wording (e.g. "I Agree", "Got it").',
+		displayOptions: { show: { operation: ['urlToImage'] } },
 	},
-{
+	{
 		displayName: 'Wait Until',
 		name: 'image_wait_until',
 		type: 'options',
 		options: [
-			{ name: 'Load', value: 'load' },
-			{ name: 'DOM Content Loaded', value: 'domcontentloaded' },
-			{ name: 'Network Idle', value: 'networkidle' },
+			{ name: 'Fully Loaded (Default)', value: 'load', description: 'All resources (images, CSS, fonts) finished loading' },
+			{ name: 'DOM Ready (Fast)', value: 'domcontentloaded', description: 'HTML parsed — images may still load' },
+			{ name: 'Network Quiet (Best for SPAs)', value: 'networkidle', description: 'No network activity for 500 ms' },
+			{ name: 'First Response (Fastest)', value: 'commit', description: 'Proceed on first byte from server' },
 		],
 		default: 'load',
-		description: 'When to consider navigation successful',
-		displayOptions: {
-			show: {
-				operation: ['urlToImage'],
-			},
-		},
+		description: 'When to consider the page loaded before capturing',
+		displayOptions: { show: { operation: ['urlToImage'] } },
 	},
-{
-		displayName: 'Google Font',
-		name: 'image_font',
-		type: 'string',
-		default: '',
-		description: 'Google Font name(s) to include (use | separator for multiple)',
-		displayOptions: {
-			show: {
-				operation: ['htmlToImage'],
-			},
-		},
+	{
+		displayName: 'Extra Delay (Ms)',
+		name: 'image_wait_for_timeout',
+		type: 'number',
+		default: 0,
+		typeOptions: { minValue: 0 },
+		description: 'Additional milliseconds to wait after the page loads — useful for animations, lazy content, or JS rendering (0 = no delay)',
+		displayOptions: { show: { operation: ['urlToImage'] } },
 	},
-{
+
+	// ─── 5. Viewport (both) ─────────────────────────────────────────
+	{
+		displayName: 'Viewport Size',
+		name: 'image_viewport_preset',
+		type: 'options',
+		options: [
+			{ name: 'Desktop (1920 × 1080) (Default)', value: '1920x1080' },
+			{ name: 'Standard (1280 × 720)', value: '1280x720' },
+			{ name: 'Laptop (1366 × 768)', value: '1366x768' },
+			{ name: 'Large Desktop (2560 × 1440)', value: '2560x1440' },
+			{ name: 'Mobile (375 × 812)', value: '375x812' },
+			{ name: 'Tablet (768 × 1024)', value: '768x1024' },
+			{ name: 'Custom …', value: 'custom' },
+		],
+		default: '1920x1080',
+		description: 'Browser viewport dimensions used during rendering',
+		displayOptions: { show: { operation: ['htmlToImage', 'urlToImage'] } },
+	},
+	{
+		displayName: 'Viewport Width (px)',
+		name: 'image_viewport_width',
+		type: 'number',
+		default: 1920,
+		typeOptions: { minValue: 1 },
+		description: 'Custom viewport width in pixels',
+		displayOptions: { show: { operation: ['htmlToImage', 'urlToImage'], image_viewport_preset: ['custom'] } },
+	},
+	{
+		displayName: 'Viewport Height (px)',
+		name: 'image_viewport_height',
+		type: 'number',
+		default: 1080,
+		typeOptions: { minValue: 1 },
+		description: 'Custom viewport height in pixels',
+		displayOptions: { show: { operation: ['htmlToImage', 'urlToImage'], image_viewport_preset: ['custom'] } },
+	},
+
+	// ─── 6. HTML Dynamic Params ─────────────────────────────────────
+	{
 		displayName: 'Dynamic Params',
 		name: 'image_dynamic_params',
 		type: 'fixedCollection',
-		typeOptions: {
-			multipleValues: true,
-		},
+		typeOptions: { multipleValues: true },
 		default: {},
-		description: 'Dynamic parameters to replace in HTML',
-		displayOptions: {
-			show: {
-				operation: ['htmlToImage'],
-			},
-		},
+		description: 'Key/value pairs that replace {{placeholders}} in the HTML',
+		displayOptions: { show: { operation: ['htmlToImage'] } },
 		options: [
 			{
 				name: 'params',
-				displayName: 'Params',
+				displayName: 'Parameter',
 				values: [
 					{
 						displayName: 'Key',
 						name: 'key',
 						type: 'string',
 						default: '',
-						description: 'Placeholder key',
+						placeholder: 'name',
+						description: 'Placeholder key — without the {{ }} braces',
 					},
 					{
 						displayName: 'Value',
 						name: 'value',
 						type: 'string',
 						default: '',
-						description: 'Replacement value',
+						placeholder: 'John Doe',
+						description: 'Replacement value for this placeholder',
 					},
 				],
 			},
 		],
 	},
+
+	// ─── 7. Advanced Options ────────────────────────────────────────
+	{
+		displayName: 'Advanced Options',
+		name: 'imageAdvancedOptions',
+		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
+		displayOptions: { show: { operation: ['htmlToImage', 'urlToImage'] } },
+		options: [
+			{
+				displayName: 'Device Scale Factor',
+				name: 'device_scale_factor',
+				type: 'number',
+				default: 1,
+				typeOptions: { minValue: 1, maxValue: 3 },
+				description: 'Pixel density multiplier. Use 2 for retina-quality screenshots, 3 for ultra-high DPI. Default 1.',
+			},
+			{
+				displayName: 'Quality',
+				name: 'quality',
+				type: 'number',
+				default: 80,
+				typeOptions: { minValue: 30, maxValue: 100 },
+				description: 'Image quality (30–100). Lower = smaller file size.',
+			},
+		],
+	},
 ];
+
+/* ================================================================
+ *  Execute handler
+ * ================================================================ */
 
 export async function execute(
 	this: IExecuteFunctions,
@@ -231,17 +244,30 @@ export async function execute(
 	operation: string,
 ): Promise<void> {
 	const outputFormat = this.getNodeParameter('image_output_format', index) as string;
-	const width = this.getNodeParameter('image_width', index) as number;
-	const height = this.getNodeParameter('image_height', index) as number;
-	const viewportWidth = this.getNodeParameter('image_viewport_width', index) as number;
-	const viewportHeight = this.getNodeParameter('image_viewport_height', index) as number;
-	const deviceScale = this.getNodeParameter('image_device_scale', index) as number;
-	const quality = this.getNodeParameter('image_quality', index) as number;
+
+	// ── Viewport ────────────────────────────────────────────────────
+	const viewportPreset = this.getNodeParameter('image_viewport_preset', index, '1920x1080') as string;
+	const [presetW, presetH] = viewportPreset === 'custom'
+		? [1920, 1080]
+		: viewportPreset.split('x').map(Number);
+	const viewportWidth = this.getNodeParameter('image_viewport_width', index, presetW) as number;
+	const viewportHeight = this.getNodeParameter('image_viewport_height', index, presetH) as number;
+
+	// ── Advanced options ────────────────────────────────────────────
+	const advanced = this.getNodeParameter('imageAdvancedOptions', index, {}) as Record<string, unknown>;
+
+	// Backward compat for legacy top-level fields
+	let deviceScale = advanced.device_scale_factor as number | undefined;
+	if (deviceScale === undefined) {
+		try { deviceScale = this.getNodeParameter('image_device_scale', index) as number; } catch { deviceScale = 1; }
+	}
+	let quality = advanced.quality as number | undefined;
+	if (quality === undefined) {
+		try { quality = this.getNodeParameter('image_quality', index) as number; } catch { quality = 80; }
+	}
 
 	const body: Record<string, unknown> = {
 		output_format: outputFormat,
-		width,
-		height,
 		viewPortWidth: viewportWidth,
 		viewPortHeight: viewportHeight,
 		device_scale_factor: deviceScale,
@@ -250,7 +276,12 @@ export async function execute(
 
 	if (operation === 'htmlToImage') {
 		body.html_content = this.getNodeParameter('image_html_content', index) as string;
-		body.css_content = this.getNodeParameter('image_css_content', index, '') as string;
+		body.width = this.getNodeParameter('image_width', index, 1280) as number;
+		body.height = this.getNodeParameter('image_height', index, 720) as number;
+
+		const cssContent = this.getNodeParameter('image_css_content', index, '') as string;
+		if (cssContent) body.css_content = cssContent;
+
 		const font = this.getNodeParameter('image_font', index, '') as string;
 		if (font) body.font = font;
 
@@ -259,22 +290,25 @@ export async function execute(
 		};
 		if (dynamicParams.params?.length) {
 			const mapped: Record<string, string> = {};
-			dynamicParams.params
-				.filter((p) => (p.key ?? '') !== '')
-				.forEach((p) => {
-					mapped[p.key as string] = p.value ?? '';
-				});
-			if (Object.keys(mapped).length) {
-				body.dynamic_params = mapped;
+			for (const p of dynamicParams.params) {
+				if (p.key) mapped[p.key] = p.value ?? '';
 			}
+			if (Object.keys(mapped).length) body.dynamic_params = mapped;
 		}
 	} else {
+		// urlToImage
 		body.url = normalizeUrl(this.getNodeParameter('image_gen_url', index) as string);
-		body.full_page = this.getNodeParameter('image_full_page', index) as boolean;
-		body.wait_till = this.getNodeParameter('image_wait_till', index) as number;
-		body.wait_until = this.getNodeParameter('image_wait_until', index) as string;
+		body.full_page = this.getNodeParameter('image_full_page', index, false) as boolean;
+		body.wait_until = this.getNodeParameter('image_wait_until', index, 'load') as string;
+
+		const cookieText = this.getNodeParameter('image_cookie_accept_text', index, 'Accept ALL') as string;
+		if (cookieText) body.cookie_accept_text = cookieText;
+
+		const waitForTimeout = this.getNodeParameter('image_wait_for_timeout', index, 0) as number;
+		if (waitForTimeout > 0) body.wait_for_timeout = waitForTimeout;
 	}
 
+	// ── API call ────────────────────────────────────────────────────
 	if (outputFormat === 'file') {
 		const responseData = await this.helpers.httpRequestWithAuthentication.call(
 			this,
@@ -286,16 +320,18 @@ export async function execute(
 				json: true,
 				encoding: 'arraybuffer',
 				returnFullResponse: true,
+				ignoreHttpStatusErrors: true,
 			},
-		);
+		) as { body: ArrayBuffer; statusCode: number; headers?: Record<string, unknown> };
+
+		if (responseData.statusCode >= 400) {
+			let errorBody: unknown;
+			try { errorBody = JSON.parse(Buffer.from(responseData.body).toString('utf8')); } catch { errorBody = {}; }
+			checkApiResponse(this, responseData.statusCode, errorBody, index);
+		}
+
 		returnData.push(
-			await prepareBinaryResponse.call(
-				this,
-				index,
-				responseData as { body: ArrayBuffer; headers?: Record<string, unknown> },
-				'image.png',
-				'image/png',
-			),
+			await prepareBinaryResponse.call(this, index, responseData, 'image.png', 'image/png'),
 		);
 	} else {
 		const responseData = await this.helpers.httpRequestWithAuthentication.call(
@@ -306,8 +342,12 @@ export async function execute(
 				url: 'https://pdfapihub.com/api/v1/generateImage',
 				body,
 				json: true,
+				returnFullResponse: true,
+				ignoreHttpStatusErrors: true,
 			},
-		);
-		returnData.push({ json: responseData, pairedItem: { item: index } });
+		) as { body: Record<string, unknown>; statusCode: number };
+
+		checkApiResponse(this, responseData.statusCode, responseData.body, index);
+		returnData.push({ json: responseData.body as import('n8n-workflow').IDataObject, pairedItem: { item: index } });
 	}
 }
