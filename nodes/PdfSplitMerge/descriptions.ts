@@ -77,6 +77,11 @@ export const resourceProperty: INodeProperties = {
 				value: 'fileManagement',
 				description: 'Upload, list, or delete files in your cloud storage',
 			},
+			{
+				name: 'Template',
+				value: 'templates',
+				description: 'Save and manage reusable HTML/CSS templates for PDF and image generation',
+			},
 			],
 		default: 'pdfCreation',
 	};
@@ -105,6 +110,12 @@ export const operationProperties: INodeProperties[] = [
 				description: 'Generate PDF from HTML/CSS',
 				action: 'Convert HTML to PDF',
 			},
+			{
+				name: 'Template to PDF',
+				value: 'templateToPdf',
+				description: 'Generate PDF from a saved reusable template',
+				action: 'Generate PDF from a saved template',
+			},
 		],
 		default: 'urlToPdf',
 	},
@@ -130,6 +141,12 @@ export const operationProperties: INodeProperties[] = [
 				value: 'htmlToImage',
 				description: 'Generate image from HTML/CSS',
 				action: 'Convert HTML to image',
+			},
+			{
+				name: 'Template to Image',
+				value: 'templateToImage',
+				description: 'Generate image from a saved reusable template',
+				action: 'Generate image from a saved template',
 			},
 		],
 		default: 'urlToImage',
@@ -477,5 +494,49 @@ export const operationProperties: INodeProperties[] = [
 			},
 		],
 		default: 'uploadFile',
+	},
+{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['templates'],
+			},
+		},
+		options: [
+			{
+				name: 'Create Template',
+				value: 'createTemplate',
+				description: 'Save a reusable HTML/CSS template with optional default parameters',
+				action: 'Create a template',
+			},
+			{
+				name: 'Delete Template',
+				value: 'deleteTemplate',
+				description: 'Permanently delete a template',
+				action: 'Delete a template',
+			},
+			{
+				name: 'Get Template',
+				value: 'getTemplate',
+				description: 'Retrieve the full template including HTML and CSS content',
+				action: 'Get a template',
+			},
+			{
+				name: 'List Templates',
+				value: 'listTemplates',
+				description: 'List all templates owned by your API key',
+				action: 'List all templates',
+			},
+			{
+				name: 'Update Template',
+				value: 'updateTemplate',
+				description: 'Update one or more fields on an existing template',
+				action: 'Update a template',
+			},
+		],
+		default: 'createTemplate',
 	},
 ];

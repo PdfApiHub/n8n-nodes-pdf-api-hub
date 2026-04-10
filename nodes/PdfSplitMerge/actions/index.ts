@@ -21,6 +21,8 @@ import * as addWatermark from './addWatermark';
 import * as signPdf from './signPdf';
 import * as pdfToFormat from './pdfToFormat';
 import * as fileManagement from './fileManagement';
+import * as templateManagement from './templateManagement';
+import * as generateFromTemplate from './generateFromTemplate';
 
 /**
  * Action handler type.
@@ -63,6 +65,8 @@ export const allActionDescriptions: INodeProperties[] = [
 	...splitPdf.description,
 	...unlockPdf.description,
 	...signPdf.description,
+	...templateManagement.description,
+	...generateFromTemplate.description,
 ];
 
 const actionMap: Record<string, ActionHandler> = {
@@ -125,6 +129,17 @@ const actionMap: Record<string, ActionHandler> = {
 	uploadFile: fileManagement.execute,
 	listFiles: fileManagement.execute,
 	deleteFile: fileManagement.execute,
+
+	// Template Management
+	createTemplate: templateManagement.execute as ActionHandler,
+	listTemplates: templateManagement.execute as ActionHandler,
+	getTemplate: templateManagement.execute as ActionHandler,
+	updateTemplate: templateManagement.execute as ActionHandler,
+	deleteTemplate: templateManagement.execute as ActionHandler,
+
+	// Generate from Template
+	templateToPdf: generateFromTemplate.execute as ActionHandler,
+	templateToImage: generateFromTemplate.execute as ActionHandler,
 };
 
 /**

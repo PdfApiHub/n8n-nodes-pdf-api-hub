@@ -1,22 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" aria-label="PDF API Hub">
-	<defs>
-		<linearGradient id="bg" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
-			<stop offset="0" stop-color="#EEF2FF"/>
-			<stop offset="1" stop-color="#DDD6FE"/>
-		</linearGradient>
-	</defs>
-
-	<!-- Slight inset so it doesn't look full-bleed in n8n -->
-	<rect x="4" y="4" width="56" height="56" rx="12" fill="url(#bg)" stroke="#CBD5E1" stroke-width="1"/>
-
-	<!-- Centered logo text: </pdf> -->
-	<text x="32" y="33" text-anchor="middle" dominant-baseline="middle"
-		font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace"
-		font-size="18" font-weight="700" letter-spacing="-0.5">
-		<tspan fill="#0F172A">&lt;/</tspan><tspan fill="#6D28D9">pdf</tspan><tspan fill="#0F172A">&gt;</tspan>
-	</text>
-
-	<!-- Small page corner mark (subtle, optional) -->
-	<path d="M44 18h-6a2 2 0 0 0-2 2v6" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <text x="32" y="40" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="bold" fill="#F77522">PDF</text>
 </svg>

@@ -10,6 +10,17 @@ import { normalizeUrl, prepareBinaryResponse, checkApiResponse } from '../helper
  * ================================================================ */
 
 export const description: INodeProperties[] = [
+	// ─── 0. Starter Template (HTML only) ────────────────────────────
+	{
+		displayName: 'Ready-Made Sample Name or ID',
+		name: 'image_starter_template',
+		type: 'options',
+		typeOptions: { loadOptionsMethod: 'getStarterTemplates' },
+		default: '',
+		description: 'Pick a ready-made sample to pre-fill HTML, CSS, and dynamic params. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+		displayOptions: { show: { operation: ['htmlToImage'] } },
+	},
+
 	// ─── 1. Source: URL ─────────────────────────────────────────────
 	{
 		displayName: 'URL',
@@ -22,17 +33,44 @@ export const description: INodeProperties[] = [
 		displayOptions: { show: { operation: ['urlToImage'] } },
 	},
 
-	// ─── 1. Source: HTML ────────────────────────────────────────────
+	// ─── 1. Source: HTML (no sample selected) ───────────────────
 	{
 		displayName: 'HTML Content',
 		name: 'image_html_content',
 		type: 'string',
 		typeOptions: { rows: 6 },
 		default: '',
-		required: true,
 		placeholder: '<div style="padding:40px;background:#4F46E5;color:white"><h1>Hello World</h1></div>',
-		description: 'HTML to render as an image. Supports {{placeholder}} syntax when combined with Dynamic Params.',
-		displayOptions: { show: { operation: ['htmlToImage'] } },
+		description: 'HTML to render as an image. Supports {{placeholder}} syntax with Dynamic Params.',
+		displayOptions: { show: { operation: ['htmlToImage'], image_starter_template: [''] } },
+	},
+
+	// ─── 1. Source: HTML (sample selected — loaded from sample) ──────
+	{
+		displayName: 'HTML Content',
+		name: 'image_template_html_content',
+		type: 'resourceMapper',
+		noDataExpression: true,
+		default: {
+			mappingMode: 'defineBelow',
+			value: null,
+		},
+		description: 'HTML loaded from the selected sample. Edit directly or clear to use sample as-is.',
+		displayOptions: { hide: { image_starter_template: [''] }, show: { operation: ['htmlToImage'] } },
+		typeOptions: {
+			loadOptionsDependsOn: ['image_starter_template'],
+			resourceMapper: {
+				resourceMapperMethod: 'getStarterTemplateHtmlImage',
+				mode: 'add',
+				fieldWords: {
+					singular: 'field',
+					plural: 'fields',
+				},
+				addAllFields: true,
+				multiKeyMatch: false,
+				supportAutoMap: false,
+			},
+		},
 	},
 	{
 		displayName: 'CSS Content (Optional)',
@@ -169,14 +207,42 @@ export const description: INodeProperties[] = [
 		displayOptions: { show: { operation: ['htmlToImage', 'urlToImage'], image_viewport_preset: ['custom'] } },
 	},
 
-	// ─── 6. HTML Dynamic Params ─────────────────────────────────────
+	// ─── 6a. HTML Dynamic Params (from Starter Template) ───────────
+	{
+		displayName: 'Dynamic Params (From Sample)',
+		name: 'image_dynamic_params',
+		type: 'resourceMapper',
+		noDataExpression: true,
+		default: {
+			mappingMode: 'defineBelow',
+			value: null,
+		},
+		description: 'Placeholders loaded from the selected sample. Fill in values and remove any you don\'t need.',
+		displayOptions: { show: { operation: ['htmlToImage'] } },
+		typeOptions: {
+			loadOptionsDependsOn: ['image_starter_template'],
+			resourceMapper: {
+				resourceMapperMethod: 'getStarterTemplatePlaceholdersImage',
+				mode: 'add',
+				fieldWords: {
+					singular: 'placeholder',
+					plural: 'placeholders',
+				},
+				addAllFields: true,
+				multiKeyMatch: false,
+				supportAutoMap: false,
+			},
+		},
+	},
+
+	// ─── 6b. HTML Dynamic Params (manual) ──────────────────────────
 	{
 		displayName: 'Dynamic Params',
-		name: 'image_dynamic_params',
+		name: 'image_dynamic_params_manual',
 		type: 'fixedCollection',
 		typeOptions: { multipleValues: true },
 		default: {},
-		description: 'Key/value pairs that replace {{placeholders}} in the HTML',
+		description: 'Additional key/value pairs that replace {{placeholders}} in the HTML. Merged with sample params above.',
 		displayOptions: { show: { operation: ['htmlToImage'] } },
 		options: [
 			{
@@ -189,7 +255,7 @@ export const description: INodeProperties[] = [
 						type: 'string',
 						default: '',
 						placeholder: 'name',
-						description: 'Placeholder key — without the {{ }} braces',
+						description: 'Placeholder key \u2014 without the {{ }} braces',
 					},
 					{
 						displayName: 'Value',
@@ -275,7 +341,37 @@ export async function execute(
 	};
 
 	if (operation === 'htmlToImage') {
-		body.html_content = this.getNodeParameter('image_html_content', index) as string;
+		let htmlContent = '';
+
+		// When a starter template is selected, use its HTML (resourceMapper override takes priority)
+		const starterTemplateId = this.getNodeParameter('image_starter_template', index, '') as string;
+		let userHtml = '';
+
+		if (starterTemplateId) {
+			const templateHtmlRaw = this.getNodeParameter('image_template_html_content', index, {}) as {
+				mappingMode?: string;
+				value?: Record<string, string> | null;
+			};
+			userHtml = templateHtmlRaw.value?.html_content ?? '';
+		} else {
+			userHtml = this.getNodeParameter('image_html_content', index, '') as string;
+		}
+
+		if (userHtml) {
+			htmlContent = userHtml;
+		} else if (starterTemplateId) {
+			try {
+				const allTemplates = await this.helpers.httpRequest({
+					method: 'GET',
+					url: 'https://pdfapihub.com/starter-templates.json',
+					json: true,
+				}) as Array<{ id: string; html: string }>;
+				const tpl = allTemplates.find((t) => t.id === starterTemplateId);
+				if (tpl?.html) htmlContent = tpl.html;
+			} catch { /* template fetch failed */ }
+		}
+
+		body.html_content = htmlContent;
 		body.width = this.getNodeParameter('image_width', index, 1280) as number;
 		body.height = this.getNodeParameter('image_height', index, 720) as number;
 
@@ -285,16 +381,34 @@ export async function execute(
 		const font = this.getNodeParameter('image_font', index, '') as string;
 		if (font) body.font = font;
 
-		const dynamicParams = this.getNodeParameter('image_dynamic_params', index, {}) as {
+		// Dynamic params (from resourceMapper + manual fixedCollection)
+		const allDynamic: Record<string, string> = {};
+
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const dynamicParamsRaw = this.getNodeParameter('image_dynamic_params', index, {}) as any;
+		// New format: resourceMapper { mappingMode, value: { key: val } }
+		if (dynamicParamsRaw.value && typeof dynamicParamsRaw.value === 'object') {
+			for (const [k, v] of Object.entries(dynamicParamsRaw.value as Record<string, string>)) {
+				if (k) allDynamic[k] = v ?? '';
+			}
+		}
+		// Legacy format: fixedCollection { params: [{ key, value }] }
+		if (dynamicParamsRaw.params?.length) {
+			for (const p of dynamicParamsRaw.params as Array<{ key?: string; value?: string }>) {
+				if (p.key) allDynamic[p.key] = p.value ?? '';
+			}
+		}
+
+		const manualParams = this.getNodeParameter('image_dynamic_params_manual', index, {}) as {
 			params?: Array<{ key?: string; value?: string }>;
 		};
-		if (dynamicParams.params?.length) {
-			const mapped: Record<string, string> = {};
-			for (const p of dynamicParams.params) {
-				if (p.key) mapped[p.key] = p.value ?? '';
+		if (manualParams.params?.length) {
+			for (const p of manualParams.params) {
+				if (p.key) allDynamic[p.key] = p.value ?? '';
 			}
-			if (Object.keys(mapped).length) body.dynamic_params = mapped;
 		}
+
+		if (Object.keys(allDynamic).length) body.dynamic_params = allDynamic;
 	} else {
 		// urlToImage
 		body.url = normalizeUrl(this.getNodeParameter('image_gen_url', index) as string);
