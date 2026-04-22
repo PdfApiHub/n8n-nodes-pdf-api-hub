@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Insurance Claim Form</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', Arial, sans-serif;
+    color: #1a1a1a;
+    padding: 40px 48px;
+    line-height: 1.5;
+    font-size: 13px;
+  }
+
+  /* ── Header ──────────────────────────────────── */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 3px solid #1a5276;
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+  }
+  .logo-area .company {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a5276;
+  }
+  .logo-area .tagline {
+    font-size: 11px;
+    color: #777;
+    margin-top: 2px;
+  }
+  .form-meta {
+    text-align: right;
+    font-size: 11px;
+    color: #555;
+  }
+  .form-meta .form-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #c0392b;
+    margin-bottom: 4px;
+  }
+
+  /* ── Sections ────────────────────────────────── */
+  .section {
+    margin-bottom: 20px;
+    page-break-inside: avoid;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a5276;
+    padding: 6px 14px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Table-based fields ──────────────────────── */
+  .fields {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .fields td {
+    border: 1px solid #d0d0d0;
+    padding: 7px 12px;
+    vertical-align: top;
+  }
+  .fields .label {
+    background: #f0f4f8;
+    font-weight: 600;
+    color: #333;
+    width: 200px;
+    font-size: 12px;
+  }
+  .fields .value {
+    color: #111;
+    min-width: 180px;
+  }
+
+  /* ── Checkboxes ──────────────────────────────── */
+  .checkbox-row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    padding: 4px 0;
+  }
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+  }
+  .box {
+    width: 14px;
+    height: 14px;
+    border: 1.5px solid #555;
+    border-radius: 2px;
+    display: inline-block;
+    text-align: center;
+    line-height: 14px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .box.checked {
+    background: #1a5276;
+    border-color: #1a5276;
+    color: #fff;
+  }
+
+  /* ── Description box ─────────────────────────── */
+  .desc-box {
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    padding: 12px 14px;
+    min-height: 80px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #222;
+  }
+
+  /* ── Signature ───────────────────────────────── */
+  .sig-area {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 32px;
+    gap: 40px;
+  }
+  .sig-block {
+    flex: 1;
+  }
+  .sig-line {
+    border-bottom: 1px solid #333;
+    height: 40px;
+    margin-bottom: 4px;
+  }
+  .sig-label {
+    font-size: 11px;
+    color: #555;
+  }
+
+  /* ── Footer ──────────────────────────────────── */
+  .footer {
+    margin-top: 36px;
+    padding-top: 12px;
+    border-top: 1px solid #ddd;
+    font-size: 10px;
+    color: #999;
+    text-align: center;
+  }
+
+  /* ── Utilities ───────────────────────────────── */
+  .text-red { color: #c0392b; }
+  .mt-4 { margin-top: 4px; }
+  .small { font-size: 11px; color: #777; }
+</style>
+</head>
+
+<body>
+
+<!-- ════════════════════════════════════════════════
+     HEADER
+     ════════════════════════════════════════════════ -->
+<div class="header">
+  <div class="logo-area">
+    <div class="company">AutoGuard Insurance Co.</div>
+    <div class="tagline">Protecting What Matters Most</div>
+  </div>
+  <div class="form-meta">
+    <div class="form-title">INSURANCE CLAIM FORM</div>
+    <div>Form No: AG-CLM-2026</div>
+    <div>Date Filed: 2026-04-18</div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════
+     SECTION 1: POLICY HOLDER INFORMATION
+     ════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">1. Policy Holder Information</div>
+  <table class="fields">
+    <tr>
+      <td class="label">Full Name</td>
+      <td class="value">James A. Mitchell</td>
+      <td class="label">Policy Number</td>
+      <td class="value">AG-AUTO-2024-08712</td>
+    </tr>
+    <tr>
+      <td class="label">Email Address</td>
+      <td class="value">james.mitchell@email.com</td>
+      <td class="label">Phone Number</td>
+      <td class="value">(555) 234-8891</td>
+    </tr>
+    <tr>
+      <td class="label">Mailing Address</td>
+      <td class="value" colspan="3">742 Evergreen Terrace, Apt 4B, Springfield, IL 62704</td>
+    </tr>
+    <tr>
+      <td class="label">Date of Birth</td>
+      <td class="value">1985-03-14</td>
+      <td class="label">Driver's License #</td>
+      <td class="value">M620-8834-2217</td>
+    </tr>
+  </table>
+</div>
+
+
+<!-- ════════════════════════════════════════════════
+     SECTION 2: VEHICLE INFORMATION
+     ════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">2. Vehicle Information</div>
+  <table class="fields">
+    <tr>
+      <td class="label">Year / Make / Model</td>
+      <td class="value">2022 Toyota Camry SE</td>
+      <td class="label">VIN</td>
+      <td class="value">4T1G11AK8NU123456</td>
+    </tr>
+    <tr>
+      <td class="label">License Plate</td>
+      <td class="value">IL-AG8 2X4</td>
+      <td class="label">Odometer Reading</td>
+      <td class="value">34,218 miles</td>
+    </tr>
+    <tr>
+      <td class="label">Color</td>
+      <td class="value">Celestial Silver</td>
+      <td class="label">Coverage Type</td>
+      <td class="value">Comprehensive + Collision</td>
+    </tr>
+  </table>
+</div>
+
+
+<!-- ════════════════════════════════════════════════
+     SECTION 3: INCIDENT DETAILS
+     ════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">3. Incident Details</div>
+  <table class="fields">
+    <tr>
+      <td class="label">Date of Incident</td>
+      <td class="value">2026-04-15</td>
+      <td class="label">Time of Incident</td>
+      <td class="value">3:45 PM</td>
+    </tr>
+    <tr>
+      <td class="label">Location</td>
+      <td class="value" colspan="3">Intersection of Main St. & Oak Ave., Springfield, IL 62704</td>
+    </tr>
+    <tr>
+      <td class="label">Police Report Filed?</td>
+      <td class="value">Yes — Report # SPD-2026-04-3847</td>
+      <td class="label">Injuries Reported?</td>
+      <td class="value">Minor — neck strain (driver)</td>
+    </tr>
+  </table>
+
+  <div style="margin-top: 10px;">
+    <div style="font-weight: 600; font-size: 12px; margin-bottom: 6px; color: #333;">Type of Claim:</div>
+    <div class="checkbox-row">
+      <div class="checkbox-item"><span class="box checked">✓</span> Collision</div>
+      <div class="checkbox-item"><span class="box"></span> Comprehensive</div>
+      <div class="checkbox-item"><span class="box"></span> Liability</div>
+      <div class="checkbox-item"><span class="box"></span> Uninsured Motorist</div>
+      <div class="checkbox-item"><span class="box checked">✓</span> Medical / PIP</div>
+      <div class="checkbox-item"><span class="box"></span> Theft</div>
+      <div class="checkbox-item"><span class="box"></span> Windshield / Glass</div>
+      <div class="checkbox-item"><span class="box"></span> Other</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════
+     SECTION 4: DESCRIPTION OF INCIDENT
+     ════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">4. Description of Incident</div>
+  <div class="desc-box">
+    While driving northbound on Main St., the other vehicle (a red 2019 Honda Civic, plate IL-KR7 9Z1) ran a red light at the Oak Ave. intersection and struck the front-left side of my vehicle. Impact caused significant damage to the front bumper, left fender, and headlight assembly. Airbags did not deploy. I experienced neck strain and was evaluated at Springfield Medical Center ER (visit record attached). The other driver admitted fault at the scene and was cited by Springfield PD. Two witnesses provided statements to the responding officer.
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════
+     SECTION 5: DAMAGE & COST ESTIMATE
+     ════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">5. Damage & Cost Estimate</div>
+  <table class="fields">
+    <tr>
+      <td class="label">Vehicle Damage Estimate</td>
+      <td class="value">$8,450.00</td>
+      <td class="label">Repair Shop</td>
+      <td class="value">Springfield Auto Body — (555) 900-1234</td>
+    </tr>
+    <tr>
+      <td class="label">Medical Expenses</td>
+      <td class="value">$1,200.00 (ER visit + follow-up)</td>
+      <td class="label">Rental Car Costs</td>
+      <td class="value">$480.00 (estimated 12 days)</td>
+    </tr>
+    <tr>
+      <td class="label">Towing / Storage</td>
+      <td class="value">$275.00</td>
+      <td class="label">Other Expenses</td>
+      <td class="value">$0.00</td>
+    </tr>
+    <tr>
+      <td class="label" style="background: #e8f5e9; color: #1a5276; font-size: 14px;">Total Claimed Amount</td>
+      <td class="value" colspan="3" style="font-size: 18px; font-weight: 700; color: #27ae60;">$10,405.00</td>
+    </tr>
+  </table>
+</div>
+
+
+<!-- ════════════════════════════════════════════════
+     SECTION 6: OTHER PARTY INFORMATION
+     ════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">6. Other Party Information</div>
+  <table class="fields">
+    <tr>
+      <td class="label">Other Driver Name</td>
+      <td class="value">Karen L. Thompson</td>
+      <td class="label">Phone</td>
+      <td class="value">(555) 678-4321</td>
+    </tr>
+    <tr>
+      <td class="label">Insurance Company</td>
+      <td class="value">StateWide Mutual Insurance</td>
+      <td class="label">Policy #</td>
+      <td class="value">SWM-IL-2025-55431</td>
+    </tr>
+    <tr>
+      <td class="label">Vehicle</td>
+      <td class="value">2019 Honda Civic LX — Red</td>
+      <td class="label">Plate #</td>
+      <td class="value">IL-KR7 9Z1</td>
+    </tr>
+  </table>
+</div>
+
+
+<!-- ════════════════════════════════════════════════
+     SECTION 7: SUPPORTING DOCUMENTS
+     ════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">7. Supporting Documents Attached</div>
+  <div class="checkbox-row" style="padding: 8px 12px;">
+    <div class="checkbox-item"><span class="box checked">✓</span> Police Report</div>
+    <div class="checkbox-item"><span class="box checked">✓</span> Photos of Damage</div>
+    <div class="checkbox-item"><span class="box checked">✓</span> Repair Estimate</div>
+    <div class="checkbox-item"><span class="box checked">✓</span> Medical Records</div>
+    <div class="checkbox-item"><span class="box"></span> Witness Statements</div>
+    <div class="checkbox-item"><span class="box checked">✓</span> Towing Receipt</div>
+    <div class="checkbox-item"><span class="box"></span> Rental Car Receipt</div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════
+     SECTION 8: DECLARATION & SIGNATURE
+     ════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">8. Declaration & Signature</div>
+  <p style="font-size: 11px; color: #444; margin: 8px 0 16px;">
+    I hereby declare that the information provided in this claim form is true and complete to the best of my knowledge. I understand that any false or misleading statements may result in denial of the claim and/or policy cancellation. I authorize AutoGuard Insurance Co. to investigate this claim and obtain any necessary records.
+  </p>
+
+  <div class="sig-area">
+    <div class="sig-block">
+      <div class="sig-line" style="font-family: 'Brush Script MT', cursive; font-size: 24px; color: #1a0dab; padding-top: 8px;">
+        James A. Mitchell
+      </div>
+      <div class="sig-label">Policy Holder Signature</div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-line" style="padding-top: 16px; font-size: 13px;">
+        April 18, 2026
+      </div>
+      <div class="sig-label">Date</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════
+     FOOTER
+     ════════════════════════════════════════════════ -->
+<div class="footer">
+  AutoGuard Insurance Co. — Claims Department — 1-800-555-CLAIM — claims@autoguard-insurance.com<br/>
+  Form AG-CLM-2026 Rev. 1 &nbsp;|&nbsp; This form must be filed within 60 days of the incident date.
+</div>
+
+</body>
+</html>

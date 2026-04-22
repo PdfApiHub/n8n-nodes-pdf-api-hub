@@ -1,0 +1,751 @@
+{
+  "id": "xK7mWvRnT3qPcL9s",
+  "meta": {
+    "instanceId": "277842713620d9f5554de3b1518b865a152c8c4db680008bd8aec536fc18b4a8"
+  },
+  "name": "Auto Insurance Claim Approval System (AI + PDF API Hub)",
+  "tags": [],
+  "nodes": [
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000001",
+      "name": "Sticky Note - Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -800,
+        -60
+      ],
+      "parameters": {
+        "color": 4,
+        "width": 740,
+        "height": 700,
+        "content": "## 🏥 Auto Insurance Claim Approval System\n\n**What this workflow does:**\n1. Watches a Google Drive folder for new claim PDFs\n2. Downloads and extracts text from the claim form (PDF API Hub – Parse PDF)\n3. Sends the extracted data to OpenAI for automated claim evaluation\n4. Routes the claim to one of three paths:\n   - ✅ **Approved** → generates approval letter PDF, signs it, adds APPROVED watermark, uploads to Drive, emails claimant\n   - ❌ **Rejected** → generates rejection letter PDF, adds REJECTED watermark, uploads to Drive, emails claimant\n   - 🔍 **Manual Review** → forwards to a claims adjuster for human review\n5. Every claim is logged to a Google Sheet for tracking\n\n**Google Sheet Setup:**\nCreate a sheet with a tab named `claims` and these headers in row 1:\n\n| claim_id | claimant_name | claimant_email | claim_type | decision | approved_amount | reasoning | risk_flags | processed_at |\n\n**Credentials needed:**\n- Google Drive OAuth2\n- Google Sheets OAuth2\n- Gmail OAuth2\n- OpenAI API key\n- PDF API Hub API key (get one at pdfapihub.com)\n\n**PDF API Hub nodes used:**\n- Parse PDF (extract claim text)\n- HTML to PDF (generate letters) ×2\n- Sign PDF (authorized signature)\n- Add Watermark (APPROVED / REJECTED stamps) ×2\n\n**Customization tips:**\n- Edit the AI prompt in \"AI Claim Evaluator\" to match your underwriting rules\n- Edit HTML in the letter-generation nodes to match your branding\n- Change the signature URL in \"Sign Approval Letter\" to your authorized signatory"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000099",
+      "name": "Sticky Note - Approved Path",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1760,
+        -20
+      ],
+      "parameters": {
+        "color": 5,
+        "width": 1540,
+        "height": 100,
+        "content": "## ✅ Approved Path — Generate letter → Sign → Watermark \"APPROVED\" → Upload → Email claimant"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000098",
+      "name": "Sticky Note - Rejected Path",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1760,
+        440
+      ],
+      "parameters": {
+        "color": 3,
+        "width": 1260,
+        "height": 100,
+        "content": "## ❌ Rejected Path — Generate rejection letter → Watermark \"REJECTED\" → Upload → Email claimant"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000010",
+      "name": "New Claim Uploaded",
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "position": [
+        40,
+        400
+      ],
+      "parameters": {
+        "event": "fileCreated",
+        "options": {},
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "mode": "list",
+          "value": "YOUR_CLAIMS_INBOX_FOLDER_ID",
+          "cachedResultUrl": "",
+          "cachedResultName": "Claims Inbox"
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000020",
+      "name": "Download Claim PDF",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        280,
+        400
+      ],
+      "parameters": {
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.id }}"
+        },
+        "options": {},
+        "operation": "download"
+      },
+      "typeVersion": 3
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000030",
+      "name": "Extract Claim Data",
+      "type": "n8n-nodes-pdf-api-hub.pdfSplitMerge",
+      "position": [
+        520,
+        400
+      ],
+      "parameters": {
+        "resource": "pdfParsing",
+        "operation": "parsePdf",
+        "parse_input_type": "file",
+        "parse_mode": "full",
+        "parse_pages": "all"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000040",
+      "name": "AI Claim Evaluator",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "position": [
+        780,
+        400
+      ],
+      "parameters": {
+        "text": "=You are an experienced insurance claims adjuster AI. Evaluate the following claim data and make a decision.\n\nCLAIM DATA:\n{{ JSON.stringify($json, null, 2) }}\n\nEVALUATION RULES:\n- APPROVED: Claim is valid, documentation is complete, damage matches the policy type, no fraud indicators\n- REJECTED: Claim falls outside policy coverage, insufficient documentation, clear fraud indicators, or exceeds policy limits\n- MANUAL_REVIEW: Ambiguous cases, high-value claims (>$50,000), possible but unconfirmed fraud, or missing critical information\n\nRISK FLAGS to check:\n- Inconsistent dates (accident date vs report date gap >30 days)\n- Vague damage descriptions\n- Multiple recent claims from same claimant\n- Damage amount seems inflated\n- Missing police report for accident claims\n\nReturn ONLY a valid JSON object with this exact structure:\n{\n  \"decision\": \"APPROVED\" or \"REJECTED\" or \"MANUAL_REVIEW\",\n  \"reasoning\": \"2-3 sentence explanation\",\n  \"approved_amount\": number or null,\n  \"risk_flags\": [\"flag1\", \"flag2\"],\n  \"claimant_name\": \"extracted name or Unknown\",\n  \"claimant_email\": \"extracted email or empty string\",\n  \"claim_type\": \"collision/comprehensive/liability/property/medical/other\",\n  \"summary\": \"one-line claim summary\"\n}\n\nOUTPUT (STRICT): Only the JSON object, nothing else.",
+        "batching": {},
+        "messages": {
+          "messageValues": []
+        },
+        "promptType": "define"
+      },
+      "typeVersion": 1.9
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000041",
+      "name": "OpenAI GPT-4o-mini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        780,
+        640
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "maxTokens": 1000
+        },
+        "responsesApiEnabled": false
+      },
+      "typeVersion": 1.3
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000050",
+      "name": "Parse AI Decision",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1060,
+        400
+      ],
+      "parameters": {
+        "jsCode": "const aiResponse = items[0].json.text || items[0].json.response || '';\nlet parsed;\n\ntry {\n  const jsonMatch = aiResponse.match(/\\{[\\s\\S]*\\}/);\n  parsed = JSON.parse(jsonMatch[0]);\n} catch (e) {\n  parsed = {\n    decision: 'MANUAL_REVIEW',\n    reasoning: 'AI response could not be parsed — forwarding for human review.',\n    approved_amount: null,\n    risk_flags: ['parse_error'],\n    claimant_name: 'Unknown',\n    claimant_email: '',\n    claim_type: 'unknown',\n    summary: aiResponse.substring(0, 200)\n  };\n}\n\nparsed.claim_id = 'CLM-' + Date.now();\nparsed.processed_at = new Date().toISOString();\n\nreturn [{ json: parsed }];"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000060",
+      "name": "Log Claim to Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1300,
+        400
+      ],
+      "parameters": {
+        "operation": "append",
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultUrl": "",
+          "cachedResultName": "claims"
+        },
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultUrl": "",
+          "cachedResultName": "YOUR_CLAIMS_TRACKER_SHEET"
+        }
+      },
+      "typeVersion": 4,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000070",
+      "name": "Route by Decision",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        1540,
+        400
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": ""
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decision }}",
+                    "rightValue": "APPROVED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Approved"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": ""
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decision }}",
+                    "rightValue": "REJECTED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Rejected"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "typeVersion": 3
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000080",
+      "name": "Generate Approval Letter",
+      "type": "n8n-nodes-pdf-api-hub.pdfSplitMerge",
+      "position": [
+        1820,
+        140
+      ],
+      "parameters": {
+        "resource": "pdfCreation",
+        "operation": "htmlToPdf",
+        "html_content": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\"/>\n<style>\n  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');\n  * { margin: 0; padding: 0; box-sizing: border-box; }\n  body { font-family: 'Inter', Arial, sans-serif; color: #222; padding: 48px 56px; line-height: 1.6; }\n  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1a5276; padding-bottom: 18px; margin-bottom: 32px; }\n  .company { font-size: 22px; font-weight: 700; color: #1a5276; }\n  .company-sub { font-size: 12px; color: #666; margin-top: 4px; }\n  .ref { text-align: right; font-size: 12px; color: #555; }\n  .ref strong { color: #222; }\n  .stamp { display: inline-block; border: 3px solid #27ae60; color: #27ae60; padding: 8px 28px; font-size: 26px; font-weight: 700; transform: rotate(-3deg); border-radius: 6px; margin: 24px 0; letter-spacing: 2px; }\n  .section { background: #f4f8f4; border-left: 4px solid #27ae60; padding: 16px 20px; border-radius: 4px; margin: 20px 0; }\n  .section h3 { font-size: 14px; color: #1a5276; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }\n  .section p { font-size: 13px; color: #333; }\n  .amount { font-size: 28px; font-weight: 700; color: #27ae60; }\n  .footer { margin-top: 48px; font-size: 11px; color: #999; border-top: 1px solid #ddd; padding-top: 16px; }\n  p { margin-bottom: 12px; font-size: 14px; }\n</style>\n</head>\n<body>\n  <div class=\"header\">\n    <div>\n      <div class=\"company\">AutoGuard Insurance Co.</div>\n      <div class=\"company-sub\">Claims Processing Department</div>\n    </div>\n    <div class=\"ref\">\n      <strong>Claim ID:</strong> {{ $json.claim_id }}<br/>\n      <strong>Date:</strong> {{ $json.processed_at.split('T')[0] }}<br/>\n      <strong>Type:</strong> {{ $json.claim_type }}\n    </div>\n  </div>\n\n  <p>Dear <strong>{{ $json.claimant_name }}</strong>,</p>\n\n  <div class=\"stamp\">✓ CLAIM APPROVED</div>\n\n  <p>We are pleased to inform you that your insurance claim has been reviewed and <strong>approved</strong>.</p>\n\n  <div class=\"section\">\n    <h3>Approved Amount</h3>\n    <p class=\"amount\">${{ $json.approved_amount }}</p>\n  </div>\n\n  <div class=\"section\">\n    <h3>Decision Summary</h3>\n    <p>{{ $json.reasoning }}</p>\n  </div>\n\n  <p>The approved amount will be disbursed to your registered bank account within <strong>5–7 business days</strong>. If you have any questions, please contact our claims helpline at <strong>1-800-555-CLAIM</strong> referencing your Claim ID above.</p>\n\n  <p style=\"margin-top: 32px;\">Sincerely,</p>\n  <p><strong>Claims Approval Authority</strong><br/>AutoGuard Insurance Co.</p>\n\n  <div class=\"footer\">\n    This document was automatically generated and digitally signed. Reference: {{ $json.claim_id }} | AutoGuard Insurance Co. — All Rights Reserved.\n  </div>\n</body>\n</html>",
+        "output_format": "url",
+        "output_filename": "=approval-{{ $json.claim_id }}.pdf",
+        "paper_size": "A4",
+        "font": "Inter",
+        "advancedOptions": {}
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000081",
+      "name": "Sign Approval Letter",
+      "type": "n8n-nodes-pdf-api-hub.pdfSplitMerge",
+      "position": [
+        2080,
+        140
+      ],
+      "parameters": {
+        "resource": "watermark",
+        "operation": "signPdf",
+        "sign_pdf_input_type": "url",
+        "sign_pdf_url": "={{ $json.url }}",
+        "sign_sig_input_type": "text",
+        "sign_text": "Claims Dept.",
+        "sign_color": "#1a0dab",
+        "sign_font_size": 36,
+        "sign_date_stamp": true,
+        "sign_all_pages": false,
+        "sign_page": 0,
+        "sign_position": "bottom-right",
+        "sign_output_format": "url",
+        "signAdvancedOptions": {}
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000082",
+      "name": "Add APPROVED Stamp",
+      "type": "n8n-nodes-pdf-api-hub.pdfSplitMerge",
+      "position": [
+        2340,
+        140
+      ],
+      "parameters": {
+        "resource": "watermark",
+        "operation": "addWatermark",
+        "watermark_input_type": "url",
+        "watermark_url": "={{ $json.url }}",
+        "watermark_text": "APPROVED",
+        "watermark_opacity": 0.08,
+        "watermark_angle": 30,
+        "watermark_position": "center",
+        "watermark_mode": "single",
+        "watermark_output": "file",
+        "watermarkAdvancedOptions": {
+          "color": "#27ae60"
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000083",
+      "name": "Upload Approved Claim",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        2600,
+        140
+      ],
+      "parameters": {
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive",
+          "cachedResultName": "My Drive"
+        },
+        "options": {},
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "YOUR_APPROVED_CLAIMS_FOLDER_ID",
+          "cachedResultUrl": "",
+          "cachedResultName": "Approved Claims"
+        }
+      },
+      "typeVersion": 3
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000084",
+      "name": "Email Approval",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        2860,
+        140
+      ],
+      "parameters": {
+        "sendTo": "={{ $('Parse AI Decision').item.json.claimant_email }}",
+        "subject": "=✅ Insurance Claim {{ $('Parse AI Decision').item.json.claim_id }} — Approved",
+        "emailType": "html",
+        "message": "=<h2>Your Claim Has Been Approved</h2><p>Dear {{ $('Parse AI Decision').item.json.claimant_name }},</p><p>Your insurance claim <strong>{{ $('Parse AI Decision').item.json.claim_id }}</strong> has been reviewed and <strong>approved</strong> for <strong>${{ $('Parse AI Decision').item.json.approved_amount }}</strong>.</p><p>{{ $('Parse AI Decision').item.json.reasoning }}</p><p>Funds will be disbursed within 5–7 business days.</p><p>Regards,<br/>AutoGuard Insurance Co.</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "typeVersion": 2.1
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000090",
+      "name": "Generate Rejection Letter",
+      "type": "n8n-nodes-pdf-api-hub.pdfSplitMerge",
+      "position": [
+        1820,
+        600
+      ],
+      "parameters": {
+        "resource": "pdfCreation",
+        "operation": "htmlToPdf",
+        "html_content": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\"/>\n<style>\n  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');\n  * { margin: 0; padding: 0; box-sizing: border-box; }\n  body { font-family: 'Inter', Arial, sans-serif; color: #222; padding: 48px 56px; line-height: 1.6; }\n  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1a5276; padding-bottom: 18px; margin-bottom: 32px; }\n  .company { font-size: 22px; font-weight: 700; color: #1a5276; }\n  .company-sub { font-size: 12px; color: #666; margin-top: 4px; }\n  .ref { text-align: right; font-size: 12px; color: #555; }\n  .ref strong { color: #222; }\n  .stamp { display: inline-block; border: 3px solid #e74c3c; color: #e74c3c; padding: 8px 28px; font-size: 26px; font-weight: 700; transform: rotate(-3deg); border-radius: 6px; margin: 24px 0; letter-spacing: 2px; }\n  .section { background: #fdf4f4; border-left: 4px solid #e74c3c; padding: 16px 20px; border-radius: 4px; margin: 20px 0; }\n  .section h3 { font-size: 14px; color: #1a5276; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }\n  .section p { font-size: 13px; color: #333; }\n  .flags { background: #fff8e1; border-left: 4px solid #f39c12; padding: 16px 20px; border-radius: 4px; margin: 20px 0; }\n  .flags h3 { font-size: 14px; color: #e67e22; margin-bottom: 8px; }\n  .flags ul { margin: 0; padding-left: 20px; font-size: 13px; color: #333; }\n  .footer { margin-top: 48px; font-size: 11px; color: #999; border-top: 1px solid #ddd; padding-top: 16px; }\n  p { margin-bottom: 12px; font-size: 14px; }\n</style>\n</head>\n<body>\n  <div class=\"header\">\n    <div>\n      <div class=\"company\">AutoGuard Insurance Co.</div>\n      <div class=\"company-sub\">Claims Processing Department</div>\n    </div>\n    <div class=\"ref\">\n      <strong>Claim ID:</strong> {{ $json.claim_id }}<br/>\n      <strong>Date:</strong> {{ $json.processed_at.split('T')[0] }}<br/>\n      <strong>Type:</strong> {{ $json.claim_type }}\n    </div>\n  </div>\n\n  <p>Dear <strong>{{ $json.claimant_name }}</strong>,</p>\n\n  <div class=\"stamp\">✗ CLAIM DENIED</div>\n\n  <p>After careful review, we regret to inform you that your insurance claim has been <strong>denied</strong>.</p>\n\n  <div class=\"section\">\n    <h3>Reason for Denial</h3>\n    <p>{{ $json.reasoning }}</p>\n  </div>\n\n  <div class=\"flags\">\n    <h3>Risk Flags Identified</h3>\n    <ul>\n      <li>{{ $json.risk_flags.join('</li><li>') }}</li>\n    </ul>\n  </div>\n\n  <p>You have the right to appeal this decision within <strong>30 calendar days</strong> of this notice. To file an appeal, contact our appeals department at <strong>1-800-555-APPEAL</strong> or email <strong>appeals@autoguard-insurance.com</strong> with your Claim ID.</p>\n\n  <p style=\"margin-top: 32px;\">Sincerely,</p>\n  <p><strong>Claims Review Authority</strong><br/>AutoGuard Insurance Co.</p>\n\n  <div class=\"footer\">\n    This document was automatically generated. Reference: {{ $json.claim_id }} | AutoGuard Insurance Co. — All Rights Reserved.\n  </div>\n</body>\n</html>",
+        "output_format": "url",
+        "output_filename": "=rejection-{{ $json.claim_id }}.pdf",
+        "paper_size": "A4",
+        "font": "Inter",
+        "advancedOptions": {}
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000091",
+      "name": "Add REJECTED Stamp",
+      "type": "n8n-nodes-pdf-api-hub.pdfSplitMerge",
+      "position": [
+        2080,
+        600
+      ],
+      "parameters": {
+        "resource": "watermark",
+        "operation": "addWatermark",
+        "watermark_input_type": "url",
+        "watermark_url": "={{ $json.url }}",
+        "watermark_text": "REJECTED",
+        "watermark_opacity": 0.08,
+        "watermark_angle": 30,
+        "watermark_position": "center",
+        "watermark_mode": "single",
+        "watermark_output": "file",
+        "watermarkAdvancedOptions": {
+          "color": "#e74c3c"
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000092",
+      "name": "Upload Rejected Claim",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        2340,
+        600
+      ],
+      "parameters": {
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive",
+          "cachedResultName": "My Drive"
+        },
+        "options": {},
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "YOUR_REJECTED_CLAIMS_FOLDER_ID",
+          "cachedResultUrl": "",
+          "cachedResultName": "Rejected Claims"
+        }
+      },
+      "typeVersion": 3
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000093",
+      "name": "Email Rejection",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        2600,
+        600
+      ],
+      "parameters": {
+        "sendTo": "={{ $('Parse AI Decision').item.json.claimant_email }}",
+        "subject": "=❌ Insurance Claim {{ $('Parse AI Decision').item.json.claim_id }} — Denied",
+        "emailType": "html",
+        "message": "=<h2>Claim Decision Notice</h2><p>Dear {{ $('Parse AI Decision').item.json.claimant_name }},</p><p>Your insurance claim <strong>{{ $('Parse AI Decision').item.json.claim_id }}</strong> has been reviewed and unfortunately has been <strong>denied</strong>.</p><p><strong>Reason:</strong> {{ $('Parse AI Decision').item.json.reasoning }}</p><p>You may appeal this decision within 30 days. Please contact our appeals department at 1-800-555-APPEAL.</p><p>Regards,<br/>AutoGuard Insurance Co.</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "typeVersion": 2.1
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000100",
+      "name": "Notify Claims Adjuster",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        1820,
+        860
+      ],
+      "parameters": {
+        "sendTo": "claims-adjuster@your-company.com",
+        "subject": "=🔍 Manual Review Required — {{ $json.claim_id }}",
+        "emailType": "html",
+        "message": "=<h2>Claim Requires Manual Review</h2><p>A claim has been flagged for human review by the automated system.</p><table border='1' cellpadding='8' cellspacing='0' style='border-collapse:collapse; font-family:sans-serif; font-size:14px;'><tr><td><strong>Claim ID</strong></td><td>{{ $json.claim_id }}</td></tr><tr><td><strong>Claimant</strong></td><td>{{ $json.claimant_name }}</td></tr><tr><td><strong>Email</strong></td><td>{{ $json.claimant_email }}</td></tr><tr><td><strong>Type</strong></td><td>{{ $json.claim_type }}</td></tr><tr><td><strong>AI Reasoning</strong></td><td>{{ $json.reasoning }}</td></tr><tr><td><strong>Risk Flags</strong></td><td>{{ $json.risk_flags.join(', ') }}</td></tr></table><p style='margin-top:16px;'>Please review the original claim in the <strong>Claims Inbox</strong> Google Drive folder and update the tracking sheet.</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "typeVersion": 2.1
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000110",
+      "name": "Update Sheet - Approved",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        3120,
+        140
+      ],
+      "parameters": {
+        "operation": "update",
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultUrl": "",
+          "cachedResultName": "claims"
+        },
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultUrl": "",
+          "cachedResultName": "YOUR_CLAIMS_TRACKER_SHEET"
+        }
+      },
+      "typeVersion": 4.7
+    },
+    {
+      "id": "e1a0b001-aaaa-4000-b001-000000000111",
+      "name": "Update Sheet - Rejected",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        2860,
+        600
+      ],
+      "parameters": {
+        "operation": "update",
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultUrl": "",
+          "cachedResultName": "claims"
+        },
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultUrl": "",
+          "cachedResultName": "YOUR_CLAIMS_TRACKER_SHEET"
+        }
+      },
+      "typeVersion": 4.7
+    }
+  ],
+  "active": false,
+  "pinData": {},
+  "settings": {
+    "binaryMode": "separate",
+    "executionOrder": "v1"
+  },
+  "versionId": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+  "connections": {
+    "New Claim Uploaded": {
+      "main": [
+        [
+          {
+            "node": "Download Claim PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Claim PDF": {
+      "main": [
+        [
+          {
+            "node": "Extract Claim Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Claim Data": {
+      "main": [
+        [
+          {
+            "node": "AI Claim Evaluator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI GPT-4o-mini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Claim Evaluator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Claim Evaluator": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Decision": {
+      "main": [
+        [
+          {
+            "node": "Log Claim to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Claim to Sheet": {
+      "main": [
+        [
+          {
+            "node": "Route by Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Decision": {
+      "main": [
+        [
+          {
+            "node": "Generate Approval Letter",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Rejection Letter",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Claims Adjuster",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Approval Letter": {
+      "main": [
+        [
+          {
+            "node": "Sign Approval Letter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sign Approval Letter": {
+      "main": [
+        [
+          {
+            "node": "Add APPROVED Stamp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add APPROVED Stamp": {
+      "main": [
+        [
+          {
+            "node": "Upload Approved Claim",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Approved Claim": {
+      "main": [
+        [
+          {
+            "node": "Email Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Approval": {
+      "main": [
+        [
+          {
+            "node": "Update Sheet - Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Rejection Letter": {
+      "main": [
+        [
+          {
+            "node": "Add REJECTED Stamp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add REJECTED Stamp": {
+      "main": [
+        [
+          {
+            "node": "Upload Rejected Claim",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Rejected Claim": {
+      "main": [
+        [
+          {
+            "node": "Email Rejection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Rejection": {
+      "main": [
+        [
+          {
+            "node": "Update Sheet - Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
