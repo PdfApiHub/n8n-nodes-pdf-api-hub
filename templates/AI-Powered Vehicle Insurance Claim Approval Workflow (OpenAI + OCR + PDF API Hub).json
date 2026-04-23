@@ -1,19 +1,19 @@
 {
-  "name": "Auto Insurance Claim Approval System (AI + PDF API Hub) -happy path",
+  "name": "AI-Powered Vehicle Insurance Claim Approval Workflow (OpenAI + OCR + PDF API Hub)",
   "nodes": [
     {
       "parameters": {
-        "content": "## 🏥 Auto Insurance Claim Approval System\n\n**What this workflow does:**\n1. Watches a Google Drive folder for new claim PDFs\n2. Downloads and extracts text from the claim form (PDF API Hub – Parse PDF)\n3. Sends the extracted data to OpenAI for automated claim evaluation\n4. Routes the claim to one of three paths:\n   - ✅ **Approved** → generates approval letter PDF, signs it, adds APPROVED watermark, uploads to Drive, emails claimant\n   - ❌ **Rejected** → generates rejection letter PDF, adds REJECTED watermark, uploads to Drive, emails claimant\n   - 🔍 **Manual Review** → forwards to a claims adjuster for human review\n5. Every claim is logged to a Google Sheet for tracking\n\n**Google Sheet Setup:**\nCreate a sheet with a tab named `claims` and these headers in row 1:\n\n| claim_id | claimant_name | claimant_email | claim_type | decision | approved_amount | reasoning | risk_flags | processed_at |\n\n**Credentials needed:**\n- Google Drive OAuth2\n- Google Sheets OAuth2\n- Gmail OAuth2\n- OpenAI API key\n- PDF API Hub API key (get one at pdfapihub.com)\n\n**PDF API Hub nodes used:**\n- Parse PDF (extract claim text)\n- HTML to PDF (generate letters) ×2\n- Sign PDF (authorized signature)\n- Add Watermark (APPROVED / REJECTED stamps) ×2\n\n**Customization tips:**\n- Edit the AI prompt in \"AI Claim Evaluator\" to match your underwriting rules\n- Edit HTML in the letter-generation nodes to match your branding\n- Change the signature URL in \"Sign Approval Letter\" to your authorized signatory",
-        "height": 812,
+        "content": "## 🚗 AI-Powered Vehicle Insurance Claim Approval Workflow (OpenAI + OCR + PDF API Hub)\n\n\n**What this workflow does:**\n1. Monitors Gmail for incoming claim emails (subject contains \"insurance claim\" + has PDF attachment)\n2. Checks if the email was already processed — skips duplicates and notifies you\n3. Extracts PDF attachment and parses claim text (PDF API Hub – Parse PDF to JSON) . \n4. Routes to AI evaluator — either **Mock** (for testing) or **OpenAI GPT-4o-mini** (production)\nUse config (ai_mode -> mock / openai to use this)\n5. Makes a decision and routes the claim to one of three paths:\n   - ✅ **Approved** → generates approval letter PDF, signs it, stamps APPROVED watermark, uploads to Drive, emails claimant\n   - ❌ **Rejected** → generates rejection letter PDF, stamps REJECTED watermark, uploads to Drive, emails claimant\n   - 🔍 **Manual Review** → notifies the claims adjuster for human review\n6. Every claim is logged to a Google Sheet for tracking\n\n**⚙️ Configuration (edit the Workflow Config node):**\n- `self_email` — your email for duplicate-claim alerts\n- `claims_adjuster_email` — manual review recipient\n- `ai_mode` — `mock` (testing) or `openai` (production)\n- `mock_decision` — `APPROVED` | `REJECTED` | `MANUAL_REVIEW` (only used in mock mode)\n- `company_name`, `support_phone`, `appeals_email` — used in generated claim approved/rejected PDF\n\n\n**Google Sheet Setup:**\nCreate a sheet and add a tab with these headers in row 1:\n\n| claim_id | claimant_name | claimant_email | claim_type | decision | approved_amount | reasoning | risk_flags | summary | processed_at | email_message_id |\n\nSample Google Sheet (feel free to clone) - https://docs.google.com/spreadsheets/d/1oSSANnNBTqP9I4pTgXvvvKgqoCKiLaRTrNkvYnO11kc/edit?usp=sharing\n\nCheck All Google Sheet Node and select Sheet you created and sheet name.\n\n\n**Google Drive Setup:**\nTwo folders required - Approved Claims and Rejected Claims - Configure them in Google Drive Node\n\n**Credentials needed:**\n- Google Drive OAuth2 (for uploading processed claim PDFs)\n- Google Sheets OAuth2\n- Gmail OAuth2\n- OpenAI API key (only needed when `ai_mode = openai`)\n- PDF API Hub API key (get one at pdfapihub.com - Free for 30 api calls)\n\n\n**PDF API Hub nodes used:**\n- Parse PDF (extract claim text)\n- HTML to PDF (generate letters) ×2\n- Sign PDF (authorized signature on approval letter)\n- Add Watermark (APPROVED / REJECTED stamps) ×2\n\n**Customization tips:**\n- Edit the AI system prompt in \"AI Claim Evaluator (OpenAI)\" to match your underwriting rules\n- Change `mock_decision` in Workflow Config to test all three decision paths without API calls\n- Edit HTML in the letter-generation nodes to match your branding\n- Update `claims_adjuster_email` in Workflow Config to your team's inbox",
+        "height": 1180,
         "width": 740,
         "color": 4
       },
-      "id": "2706d59d-83b1-43b0-a2f8-d86f0c93eba6",
+      "id": "bdca5096-ae11-40aa-b3a8-4c40ee38b1ed",
       "name": "Sticky Note - Overview",
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -208,
-        -128
+        304,
+        1392
       ],
       "typeVersion": 1
     },
@@ -24,12 +24,12 @@
         "width": 1540,
         "color": 5
       },
-      "id": "8193676e-f7a4-4586-b8f4-e2fc457de3ac",
+      "id": "d7e8ccd8-e4c9-4dca-9b82-bf1872f012e0",
       "name": "Sticky Note - Approved Path",
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        2352,
-        -96
+        2864,
+        1424
       ],
       "typeVersion": 1
     },
@@ -40,12 +40,12 @@
         "width": 1260,
         "color": 3
       },
-      "id": "151f3766-500f-4b76-979f-02c69138d3e3",
+      "id": "2bd4f13b-7c63-4c37-9c20-9247510669a6",
       "name": "Sticky Note - Rejected Path",
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        2352,
-        384
+        2864,
+        1904
       ],
       "typeVersion": 1
     },
@@ -58,88 +58,51 @@
             }
           ]
         },
-        "triggerOn": "specificFolder",
-        "folderToWatch": {
-          "__rl": true,
-          "value": "1lQG49E0AWbn2EYXrWV4qoZta9kcKj6E8",
-          "mode": "list",
-          "cachedResultName": "Claim Doc -Input",
-          "cachedResultUrl": "https://drive.google.com/drive/folders/1lQG49E0AWbn2EYXrWV4qoZta9kcKj6E8"
+        "simple": false,
+        "filters": {
+          "q": "subject:\"insurance claim\" has:attachment"
         },
-        "event": "fileCreated",
-        "options": {}
+        "options": {
+          "downloadAttachments": true
+        }
       },
-      "id": "6146f4bc-b0ce-413d-be32-2ebc56f855a7",
+      "id": "dfcf886e-9b88-45a7-9049-19ed7de61fb9",
       "name": "New Claim Uploaded",
-      "type": "n8n-nodes-base.googleDriveTrigger",
+      "type": "n8n-nodes-base.gmailTrigger",
       "position": [
-        640,
-        336
+        1152,
+        1856
       ],
       "typeVersion": 1,
-      "credentials": {
-        "googleDriveOAuth2Api": {
-          "id": "jBHriGp6oxlQHcYU",
-          "name": "Google Drive account 2 RD"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "download",
-        "fileId": {
-          "__rl": true,
-          "mode": "id",
-          "value": "={{ $json.id }}"
-        },
-        "options": {}
-      },
-      "id": "4d579970-eb2e-41db-abdf-f5337b94fb2f",
-      "name": "Download Claim PDF",
-      "type": "n8n-nodes-base.googleDrive",
-      "position": [
-        880,
-        336
-      ],
-      "typeVersion": 3,
-      "credentials": {
-        "googleDriveOAuth2Api": {
-          "id": "jBHriGp6oxlQHcYU",
-          "name": "Google Drive account 2 RD"
-        }
-      }
+      "credentials": {}
     },
     {
       "parameters": {
         "resource": "pdfParsing",
         "parse_input_type": "file",
+        "parse_file_binary_property": "={{ $('New Claim Uploaded').item.binary[\n  Object.keys($('New Claim Uploaded').item.binary)\n    .find(key => $('New Claim Uploaded').item.binary[key].mimeType === 'application/pdf')\n] }}",
         "parse_mode": "full"
       },
-      "id": "34077639-46b0-4bae-a87c-a8cb3515ec47",
+      "id": "0f401592-1cea-48f5-8ecb-875f0f7413d5",
       "name": "Extract Claim Data",
       "type": "n8n-nodes-pdf-api-hub.pdfSplitMerge",
       "position": [
-        1120,
-        336
+        1632,
+        1856
       ],
       "typeVersion": 1,
-      "credentials": {
-        "pdfapihubApi": {
-          "id": "UDwPeFW2pUsQOYfI",
-          "name": "PDF Hub account 6"
-        }
-      }
+      "credentials": {}
     },
     {
       "parameters": {
-        "jsCode": "const aiResponse = items[0].json.text || items[0].json.response || '';\nlet parsed;\n\ntry {\n  const jsonMatch = aiResponse.match(/\\{[\\s\\S]*\\}/);\n  parsed = JSON.parse(jsonMatch[0]);\n} catch (e) {\n  parsed = {\n    decision: 'MANUAL_REVIEW',\n    reasoning: 'AI response could not be parsed — forwarding for human review.',\n    approved_amount: null,\n    risk_flags: ['parse_error'],\n    claimant_name: 'Unknown',\n    claimant_email: '',\n    claim_type: 'unknown',\n    summary: aiResponse.substring(0, 200)\n  };\n}\n\nparsed.claim_id = 'CLM-' + Date.now();\nparsed.processed_at = new Date().toISOString();\n\nreturn [{ json: parsed }];"
+        "jsCode": "const aiResponse = items[0].json.text  || items[0].json.response  || items[0].json.message?.content  || (items[0].json.choices && items[0].json.choices[0]?.message?.content)  || '';let parsed;\ntry {\n  const jsonMatch = aiResponse.match(/\\{[\\s\\S]*\\}/);\n  parsed = JSON.parse(jsonMatch[0]);\n} catch (e) {\n  parsed = {\n    decision: 'MANUAL_REVIEW',\n    reasoning: 'AI response could not be parsed — forwarding for human review.',\n    approved_amount: null,\n    risk_flags: ['parse_error'],\n    claimant_name: 'Unknown',\n    claimant_email: '',\n    claim_type: 'unknown',\n    summary: aiResponse.substring(0, 200)\n  };\n}\n\nparsed.claim_id = 'CLM-' + Date.now();\nparsed.processed_at = new Date().toISOString();\nparsed.email_message_id = $('New Claim Uploaded').item.json.id || '';\n\nreturn [{ json: parsed }];"
       },
-      "id": "d505d075-f300-43e1-81a2-ceb3dec5dc5c",
+      "id": "0a6e41a8-9673-4e8c-b1b5-0ff063b8a13e",
       "name": "Parse AI Decision",
       "type": "n8n-nodes-base.code",
       "position": [
-        1664,
-        336
+        2176,
+        1856
       ],
       "typeVersion": 2
     },
@@ -254,6 +217,15 @@
               "display": true,
               "type": "string",
               "canBeUsedToMatch": true
+            },
+            {
+              "id": "email_message_id",
+              "displayName": "email_message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
             }
           ],
           "attemptToConvertTypes": false,
@@ -261,21 +233,16 @@
         },
         "options": {}
       },
-      "id": "b0574c02-393a-42fb-9d82-73b5c59d4494",
+      "id": "eb7c7ff1-3d4a-46fa-9e84-d299b2f7932a",
       "name": "Log Claim to Sheet",
       "type": "n8n-nodes-base.googleSheets",
       "position": [
-        1904,
-        336
+        2416,
+        1856
       ],
       "typeVersion": 4,
       "alwaysOutputData": true,
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "YvbXix3j3NPtxiOx",
-          "name": "Do not use , RD G Sheet"
-        }
-      }
+      "credentials": {}
     },
     {
       "parameters": {
@@ -335,12 +302,12 @@
           "fallbackOutput": "extra"
         }
       },
-      "id": "924d52bc-208b-4380-8033-348fb5d0ff0d",
+      "id": "3fcf266d-4324-4367-9313-f135b2f2511e",
       "name": "Route by Decision",
       "type": "n8n-nodes-base.switch",
       "position": [
-        2144,
-        336
+        2656,
+        1856
       ],
       "typeVersion": 3
     },
@@ -361,20 +328,15 @@
         },
         "advancedOptions": {}
       },
-      "id": "1ae2cfc0-a0bd-4041-9d43-63595b0ae318",
+      "id": "3fc94274-3286-46d7-846d-916e1893001f",
       "name": "Generate Approval Letter",
       "type": "n8n-nodes-pdf-api-hub.pdfSplitMerge",
       "position": [
-        2416,
-        80
+        2928,
+        1600
       ],
       "typeVersion": 1,
-      "credentials": {
-        "pdfapihubApi": {
-          "id": "UDwPeFW2pUsQOYfI",
-          "name": "PDF Hub account 6"
-        }
-      }
+      "credentials": {}
     },
     {
       "parameters": {
@@ -388,20 +350,15 @@
         "sign_all_pages": false,
         "signAdvancedOptions": {}
       },
-      "id": "b6230fd4-4604-4b67-99f0-92665ea6eb38",
+      "id": "4dcffea6-aab4-41fb-9745-b76200bcf50e",
       "name": "Sign Approval Letter",
       "type": "n8n-nodes-pdf-api-hub.pdfSplitMerge",
       "position": [
-        2672,
-        80
+        3184,
+        1600
       ],
       "typeVersion": 1,
-      "credentials": {
-        "pdfapihubApi": {
-          "id": "UDwPeFW2pUsQOYfI",
-          "name": "PDF Hub account 6"
-        }
-      }
+      "credentials": {}
     },
     {
       "parameters": {
@@ -414,20 +371,15 @@
           "color": "#27ae60"
         }
       },
-      "id": "6bc56f8c-e402-4112-bc32-27c9026fa6a2",
+      "id": "514be746-33d2-4c00-99c6-f2afc3dca46c",
       "name": "Add APPROVED Stamp",
       "type": "n8n-nodes-pdf-api-hub.pdfSplitMerge",
       "position": [
-        2944,
-        80
+        3456,
+        1600
       ],
       "typeVersion": 1,
-      "credentials": {
-        "pdfapihubApi": {
-          "id": "UDwPeFW2pUsQOYfI",
-          "name": "PDF Hub account 6"
-        }
-      }
+      "credentials": {}
     },
     {
       "parameters": {
@@ -447,20 +399,15 @@
         },
         "options": {}
       },
-      "id": "2cd90886-9eff-434a-86e1-a447aeb98891",
+      "id": "1cf8a39b-3e25-4286-b309-eff6394419b7",
       "name": "Upload Approved Claim",
       "type": "n8n-nodes-base.googleDrive",
       "position": [
-        3200,
-        80
+        3712,
+        1600
       ],
       "typeVersion": 3,
-      "credentials": {
-        "googleDriveOAuth2Api": {
-          "id": "jBHriGp6oxlQHcYU",
-          "name": "Google Drive account 2 RD"
-        }
-      }
+      "credentials": {}
     },
     {
       "parameters": {
@@ -471,21 +418,16 @@
           "appendAttribution": false
         }
       },
-      "id": "c5a77b78-2f1f-4eec-b374-86169f51f3ca",
+      "id": "c3965739-54ed-4962-8eb1-62ad4ccf4cf9",
       "name": "Email Approval",
       "type": "n8n-nodes-base.gmail",
       "position": [
-        3456,
-        80
+        3968,
+        1600
       ],
       "typeVersion": 2.1,
       "webhookId": "042cf1e4-424e-4b65-9791-042878f2e00d",
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "EKpp6NPsow2Z8JBZ",
-          "name": "RD Gmail"
-        }
-      }
+      "credentials": {}
     },
     {
       "parameters": {
@@ -504,20 +446,15 @@
         },
         "advancedOptions": {}
       },
-      "id": "55e09630-0d30-4f3f-a773-c7536a4fc6c9",
+      "id": "c673cc31-788b-4704-b2f2-5b295d7b9cc7",
       "name": "Generate Rejection Letter",
       "type": "n8n-nodes-pdf-api-hub.pdfSplitMerge",
       "position": [
-        2416,
-        544
+        2928,
+        2064
       ],
       "typeVersion": 1,
-      "credentials": {
-        "pdfapihubApi": {
-          "id": "UDwPeFW2pUsQOYfI",
-          "name": "PDF Hub account 6"
-        }
-      }
+      "credentials": {}
     },
     {
       "parameters": {
@@ -530,20 +467,15 @@
           "color": "#e74c3c"
         }
       },
-      "id": "09cbbfd7-2161-4e36-a289-b61eb2e89095",
+      "id": "feb9e959-7725-4e4c-8229-0eea44a33fb1",
       "name": "Add REJECTED Stamp",
       "type": "n8n-nodes-pdf-api-hub.pdfSplitMerge",
       "position": [
-        2672,
-        544
+        3184,
+        2064
       ],
       "typeVersion": 1,
-      "credentials": {
-        "pdfapihubApi": {
-          "id": "UDwPeFW2pUsQOYfI",
-          "name": "PDF Hub account 6"
-        }
-      }
+      "credentials": {}
     },
     {
       "parameters": {
@@ -563,20 +495,15 @@
         },
         "options": {}
       },
-      "id": "c353056f-61aa-4212-82b5-7000570e3467",
+      "id": "f957caa7-719f-4853-a345-effed7a20a98",
       "name": "Upload Rejected Claim",
       "type": "n8n-nodes-base.googleDrive",
       "position": [
-        2944,
-        544
+        3456,
+        2064
       ],
       "typeVersion": 3,
-      "credentials": {
-        "googleDriveOAuth2Api": {
-          "id": "jBHriGp6oxlQHcYU",
-          "name": "Google Drive account 2 RD"
-        }
-      }
+      "credentials": {}
     },
     {
       "parameters": {
@@ -587,46 +514,36 @@
           "appendAttribution": false
         }
       },
-      "id": "445af5dc-1107-4ded-bf95-216a3e15ac31",
+      "id": "e0c47d9f-44f3-4674-8985-7dab69faa785",
       "name": "Email Rejection",
       "type": "n8n-nodes-base.gmail",
       "position": [
-        3200,
-        544
+        3712,
+        2064
       ],
       "typeVersion": 2.1,
       "webhookId": "9267165e-5a1f-4dad-b9b1-8877ebf4dde8",
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "EKpp6NPsow2Z8JBZ",
-          "name": "RD Gmail"
-        }
-      }
+      "credentials": {}
     },
     {
       "parameters": {
-        "sendTo": "claims-adjuster@your-company.com",
+        "sendTo": "={{ $('Workflow Config').item.json.claims_adjuster_email }}",
         "subject": "=🔍 Manual Review Required — {{ $json.claim_id }}",
         "message": "=<h2>Claim Requires Manual Review</h2><p>A claim has been flagged for human review by the automated system.</p><table border='1' cellpadding='8' cellspacing='0' style='border-collapse:collapse; font-family:sans-serif; font-size:14px;'><tr><td><strong>Claim ID</strong></td><td>{{ $json.claim_id }}</td></tr><tr><td><strong>Claimant</strong></td><td>{{ $json.claimant_name }}</td></tr><tr><td><strong>Email</strong></td><td>{{ $json.claimant_email }}</td></tr><tr><td><strong>Type</strong></td><td>{{ $json.claim_type }}</td></tr><tr><td><strong>AI Reasoning</strong></td><td>{{ $json.reasoning }}</td></tr><tr><td><strong>Risk Flags</strong></td><td>{{ $json.risk_flags.join(', ') }}</td></tr></table><p style='margin-top:16px;'>Please review the original claim in the <strong>Claims Inbox</strong> Google Drive folder and update the tracking sheet.</p>",
         "options": {
           "appendAttribution": false
         }
       },
-      "id": "1f5c5d7c-b3f7-4765-92e6-963fc2078aba",
+      "id": "9f7fbe2b-4192-4bb4-91ef-9d4a2809f80a",
       "name": "Notify Claims Adjuster",
       "type": "n8n-nodes-base.gmail",
       "position": [
-        2416,
-        800
+        2928,
+        2320
       ],
       "typeVersion": 2.1,
       "webhookId": "a32da18e-85a7-445d-8f78-1b4d93f96b07",
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "EKpp6NPsow2Z8JBZ",
-          "name": "RD Gmail"
-        }
-      }
+      "credentials": {}
     },
     {
       "parameters": {
@@ -744,6 +661,15 @@
               "canBeUsedToMatch": true
             },
             {
+              "id": "email_message_id",
+              "displayName": "email_message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
               "id": "row_number",
               "displayName": "row_number",
               "required": false,
@@ -760,20 +686,15 @@
         },
         "options": {}
       },
-      "id": "e211c714-657d-4b91-a7e3-28469c06f24f",
+      "id": "34c3c24f-e839-4285-b2f8-8446807896c4",
       "name": "Update Sheet - Approved",
       "type": "n8n-nodes-base.googleSheets",
       "position": [
-        3712,
-        80
+        4224,
+        1600
       ],
       "typeVersion": 4.7,
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "YvbXix3j3NPtxiOx",
-          "name": "Do not use , RD G Sheet"
-        }
-      }
+      "credentials": {}
     },
     {
       "parameters": {
@@ -891,6 +812,15 @@
               "canBeUsedToMatch": true
             },
             {
+              "id": "email_message_id",
+              "displayName": "email_message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
               "id": "row_number",
               "displayName": "row_number",
               "required": false,
@@ -907,33 +837,217 @@
         },
         "options": {}
       },
-      "id": "571b5383-0e34-4eaa-89f5-d37344fda303",
+      "id": "cb2d97f6-32fa-4dcd-b06c-a0151f1162a2",
       "name": "Update Sheet - Rejected",
       "type": "n8n-nodes-base.googleSheets",
       "position": [
-        3456,
-        544
+        3968,
+        2064
       ],
       "typeVersion": 4.7,
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "YvbXix3j3NPtxiOx",
-          "name": "Do not use , RD G Sheet"
-        }
-      }
+      "credentials": {}
     },
     {
       "parameters": {
-        "jsCode": "// ✅ Mock AI — change mockDecision to test each path\n// Options: 'APPROVED' | 'REJECTED' | 'MANUAL_REVIEW'\nconst mockDecision = 'REJECTED';\n\nconst response = {\n  decision: mockDecision,\n  reasoning: 'Claim is valid. Police report confirms fault of other party. Documentation is complete with repair estimate, medical records, and towing receipt. Amount is within policy limits.',\n  approved_amount: mockDecision === 'APPROVED' ? 10405 : null,\n  risk_flags: mockDecision === 'MANUAL_REVIEW' ? ['high_value', 'missing_witness'] : mockDecision === 'REJECTED' ? ['insufficient_documentation', 'coverage_mismatch'] : [],\n  claimant_name: 'James A. Mitchell',\n  claimant_email: 'james.mitchell@email.com',\n  claim_type: 'collision',\n  summary: 'Collision claim — other driver ran red light, front-end damage, $10,405 total'\n};\n\nreturn [{ json: { text: JSON.stringify(response) } }];"
+        "jsCode": "// ✅ Mock AI — controlled by Workflow Config node\n// Set mock_decision in Workflow Config: 'APPROVED' | 'REJECTED' | 'MANUAL_REVIEW'\nconst mockDecision = $('Workflow Config').item.json.mock_decision || 'APPROVED';\n\nconst response = {\n  decision: mockDecision,\n  reasoning: 'Claim is valid. Police report confirms fault of other party. Documentation is complete with repair estimate, medical records, and towing receipt. Amount is within policy limits.',\n  approved_amount: mockDecision === 'APPROVED' ? 10405 : null,\n  risk_flags: mockDecision === 'MANUAL_REVIEW' ? ['high_value', 'missing_witness'] : mockDecision === 'REJECTED' ? ['insufficient_documentation', 'coverage_mismatch'] : [],\n  claimant_name: 'James A. Mitchell',\n  claimant_email: 'james.mitchell@email.com',\n  claim_type: 'collision',\n  summary: 'Collision claim — other driver ran red light, front-end damage, $10,405 total'\n};\n\nreturn [{ json: { text: JSON.stringify(response) } }];"
       },
-      "id": "1dc4f7e1-f953-4506-80a9-be490f276d9c",
+      "id": "70bccebb-e4a9-4df9-99d6-0e5310976894",
       "name": "Mock AI Evaluator",
       "type": "n8n-nodes-base.code",
       "position": [
-        1392,
-        384
+        2160,
+        2064
       ],
       "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Workflow Config').item.json.ai_mode }}",
+                    "rightValue": "openai",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "aimode-cond-0001"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "OpenAI"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "6bbeee77-1bf2-43ec-9ab1-814ff628e37c",
+      "name": "AI Mode Router",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        1904,
+        1856
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"self_email\": \"your-email@example.com\",\n  \"claims_adjuster_email\": \"adjuster@example.com\",\n  \"company_name\": \"Your Insurance Company\",\n  \"support_phone\": \"+1-555-123-4567\",\n  \"appeals_email\": \"appeals@example.com\",\n  \"ai_mode\": \"mock\",\n  \"mock_decision\": \"REJECTED\",\n  \"sheet_tab_name\": \"Claims\"\n}",
+        "options": {}
+      },
+      "id": "a30b50ad-3c90-4494-85cc-c664d0387981",
+      "name": "Workflow Config",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        1392,
+        1648
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1oSSANnNBTqP9I4pTgXvvvKgqoCKiLaRTrNkvYnO11kc",
+          "mode": "list",
+          "cachedResultName": "Auto Insurance Claim Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1oSSANnNBTqP9I4pTgXvvvKgqoCKiLaRTrNkvYnO11kc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 327001765,
+          "mode": "list",
+          "cachedResultName": "sample-claims-sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1oSSANnNBTqP9I4pTgXvvvKgqoCKiLaRTrNkvYnO11kc/edit#gid=327001765"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "email_message_id",
+              "lookupValue": "={{ $('New Claim Uploaded').item.json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b422d79c-ca99-4d5f-bc95-b419ef42bc21",
+      "name": "Check Duplicate in Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1632,
+        1648
+      ],
+      "typeVersion": 4,
+      "alwaysOutputData": true,
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "dup-cond-0001",
+              "leftValue": "={{ $json.email_message_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "485b0b39-a3bc-4d55-af53-9f2c15f11ade",
+      "name": "Already Processed?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1872,
+        1648
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Workflow Config').item.json.self_email }}",
+        "subject": "=⚠️ Duplicate Claim Detected — {{ $('New Claim Uploaded').item.json.subject }}",
+        "message": "=<h2>Duplicate Claim — Already Processed</h2><p>A claim email that was previously processed was received again and has been <strong>skipped automatically</strong>.</p><table border='1' cellpadding='8' cellspacing='0' style='border-collapse:collapse;font-family:sans-serif;font-size:14px;'><tr><td><strong>Email Subject</strong></td><td>{{ $('New Claim Uploaded').item.json.subject }}</td></tr><tr><td><strong>From</strong></td><td>{{ $('New Claim Uploaded').item.json.from }}</td></tr><tr><td><strong>Gmail Message ID</strong></td><td>{{ $('New Claim Uploaded').item.json.id }}</td></tr><tr><td><strong>Original Claim ID</strong></td><td>{{ $json.claim_id }}</td></tr><tr><td><strong>Originally Processed At</strong></td><td>{{ $json.processed_at }}</td></tr><tr><td><strong>Original Decision</strong></td><td>{{ $json.decision }}</td></tr></table><p>No further processing has occurred. To reprocess, remove the existing row from the claims sheet and resend the email.</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "2970b98b-12c1-4c58-bd97-9e318c458609",
+      "name": "Notify - Already Processed",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        2112,
+        1520
+      ],
+      "typeVersion": 2.1,
+      "webhookId": "b44da18e-85a7-4455-8f78-1b4d93f96c09",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an experienced insurance claims adjuster AI. Evaluate the following claim data and make a decision.\n\nCLAIM DATA:\n{{ JSON.stringify($json, null, 2) }}\n\nEVALUATION RULES:\n- APPROVED: Claim is valid, documentation is complete, damage matches the policy type, no fraud indicators\n- REJECTED: Claim falls outside policy coverage, insufficient documentation, clear fraud indicators, or exceeds policy limits\n- MANUAL_REVIEW: Ambiguous cases, high-value claims (>$50,000), possible but unconfirmed fraud, or missing critical information\n\nRISK FLAGS to check:\n- Inconsistent dates (accident date vs report date gap >30 days)\n- Vague damage descriptions\n- Multiple recent claims from same claimant\n- Damage amount seems inflated\n- Missing police report for accident claims\n\nReturn ONLY a valid JSON object with this exact structure:\n{\n  \"decision\": \"APPROVED\" or \"REJECTED\" or \"MANUAL_REVIEW\",\n  \"reasoning\": \"2-3 sentence explanation\",\n  \"approved_amount\": number or null,\n  \"risk_flags\": [\"flag1\", \"flag2\"],\n  \"claimant_name\": \"extracted name or Unknown\",\n  \"claimant_email\": \"extracted email or empty string\",\n  \"claim_type\": \"collision/comprehensive/liability/property/medical/other\",\n  \"summary\": \"one-line claim summary\"\n}\n\nOUTPUT (STRICT): Only the JSON object, nothing else.",
+        "messages": {
+          "messageValues": []
+        },
+        "batching": {}
+      },
+      "id": "2fe72ebf-a59b-4e60-80cd-cbda6658a50a",
+      "name": "AI Claim Evaluator",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "position": [
+        2352,
+        1584
+      ],
+      "typeVersion": 1.9
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "responsesApiEnabled": false,
+        "options": {
+          "maxTokens": 1000
+        }
+      },
+      "id": "4d273d07-9565-4385-8f4f-9a0c7481bb00",
+      "name": "OpenAI GPT-4o-mini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        2352,
+        1744
+      ],
+      "typeVersion": 1.3,
+      "credentials": {}
     }
   ],
   "pinData": {},
@@ -942,18 +1056,7 @@
       "main": [
         [
           {
-            "node": "Download Claim PDF",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Download Claim PDF": {
-      "main": [
-        [
-          {
-            "node": "Extract Claim Data",
+            "node": "Workflow Config",
             "type": "main",
             "index": 0
           }
@@ -962,6 +1065,24 @@
     },
     "Extract Claim Data": {
       "main": [
+        [
+          {
+            "node": "AI Mode Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Mode Router": {
+      "main": [
+        [
+          {
+            "node": "AI Claim Evaluator",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "Mock AI Evaluator",
@@ -1127,6 +1248,68 @@
           }
         ]
       ]
+    },
+    "Workflow Config": {
+      "main": [
+        [
+          {
+            "node": "Check Duplicate in Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Duplicate in Sheet": {
+      "main": [
+        [
+          {
+            "node": "Already Processed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Already Processed?": {
+      "main": [
+        [
+          {
+            "node": "Notify - Already Processed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract Claim Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI GPT-4o-mini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Claim Evaluator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Claim Evaluator": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -1134,11 +1317,9 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "94f28e92-ca8b-44d6-b95d-41cde0e29e31",
+  "versionId": "5f1caec0-d831-4e02-9613-8f783f56ae88",
   "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "277842713620d9f5554de3b1518b865a152c8c4db680008bd8aec536fc18b4a8"
+    "templateCredsSetupCompleted": true
   },
-  "id": "eBjZnTYHSl1f91UZ",
   "tags": []
 }
