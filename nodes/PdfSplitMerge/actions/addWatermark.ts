@@ -151,7 +151,7 @@ export const description: INodeProperties[] = [
 				description: 'Font size in points. 0 = auto-calculated (10% of page size).',
 			},
 			{
-				displayName: 'Watermark Image URL',
+				displayName: 'Image URL',
 				name: 'watermark_image_url',
 				type: 'string',
 				default: '',

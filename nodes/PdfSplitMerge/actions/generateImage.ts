@@ -170,7 +170,7 @@ export const description: INodeProperties[] = [
 		displayOptions: { show: { operation: ['urlToImage'] } },
 	},
 
-	// ─── 5. Viewport (both) ─────────────────────────────────────────
+	// ─── 5. Viewport (URL to Image only) ────────────────────────────
 	{
 		displayName: 'Viewport Size',
 		name: 'image_viewport_preset',
@@ -186,7 +186,7 @@ export const description: INodeProperties[] = [
 		],
 		default: '1920x1080',
 		description: 'Browser viewport dimensions used during rendering',
-		displayOptions: { show: { operation: ['htmlToImage', 'urlToImage'] } },
+		displayOptions: { show: { operation: ['urlToImage'] } },
 	},
 	{
 		displayName: 'Viewport Width (Px)',
@@ -195,7 +195,7 @@ export const description: INodeProperties[] = [
 		default: 1920,
 		typeOptions: { minValue: 1 },
 		description: 'Custom viewport width in pixels',
-		displayOptions: { show: { operation: ['htmlToImage', 'urlToImage'], image_viewport_preset: ['custom'] } },
+		displayOptions: { show: { operation: ['urlToImage'], image_viewport_preset: ['custom'] } },
 	},
 	{
 		displayName: 'Viewport Height (Px)',
@@ -204,7 +204,7 @@ export const description: INodeProperties[] = [
 		default: 1080,
 		typeOptions: { minValue: 1 },
 		description: 'Custom viewport height in pixels',
-		displayOptions: { show: { operation: ['htmlToImage', 'urlToImage'], image_viewport_preset: ['custom'] } },
+		displayOptions: { show: { operation: ['urlToImage'], image_viewport_preset: ['custom'] } },
 	},
 
 	// ─── 6a. HTML Dynamic Params (from Starter Template) ───────────
@@ -312,12 +312,21 @@ export async function execute(
 	const outputFormat = this.getNodeParameter('image_output_format', index) as string;
 
 	// ── Viewport ────────────────────────────────────────────────────
-	const viewportPreset = this.getNodeParameter('image_viewport_preset', index, '1920x1080') as string;
-	const [presetW, presetH] = viewportPreset === 'custom'
-		? [1920, 1080]
-		: viewportPreset.split('x').map(Number);
-	const viewportWidth = this.getNodeParameter('image_viewport_width', index, presetW) as number;
-	const viewportHeight = this.getNodeParameter('image_viewport_height', index, presetH) as number;
+	let viewportWidth: number;
+	let viewportHeight: number;
+
+	if (operation === 'htmlToImage') {
+		// For HTML-to-Image the viewport matches the output image size
+		viewportWidth = this.getNodeParameter('image_width', index, 1280) as number;
+		viewportHeight = this.getNodeParameter('image_height', index, 720) as number;
+	} else {
+		const viewportPreset = this.getNodeParameter('image_viewport_preset', index, '1920x1080') as string;
+		const [presetW, presetH] = viewportPreset === 'custom'
+			? [1920, 1080]
+			: viewportPreset.split('x').map(Number);
+		viewportWidth = this.getNodeParameter('image_viewport_width', index, presetW) as number;
+		viewportHeight = this.getNodeParameter('image_viewport_height', index, presetH) as number;
+	}
 
 	// ── Advanced options ────────────────────────────────────────────
 	const advanced = this.getNodeParameter('imageAdvancedOptions', index, {}) as Record<string, unknown>;
