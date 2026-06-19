@@ -2,11 +2,7 @@
 	"node": "n8n-nodes-pdf-split-merge.pdfSplitMerge",
 	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
-	"categories": ["Documents", "Utilities"],
-	"subcategories": {
-		"Documents": ["PDF", "OCR", "Conversion"],
-		"Utilities": ["File Processing", "Screenshots"]
-	},
+	"categories": ["Utility"],
 	"alias": [
 		"HTML",
 		"PDF",
