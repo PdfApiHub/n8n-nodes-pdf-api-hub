@@ -13,7 +13,7 @@ import { resourceProperty, operationProperties } from './descriptions';
 
 export class PdfSplitMerge implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'PDF API Hub',
+		displayName: 'HTML > PDF',
 		name: 'pdfSplitMerge',
 		icon: { light: 'file:../../icons/pdfhub.light.svg', dark: 'file:../../icons/pdfhub.dark.svg' },
 		group: ['transform'],
@@ -21,7 +21,7 @@ export class PdfSplitMerge implements INodeType {
 		description:
 			'Convert HTML to PDF, take website screenshots, run OCR on scanned files.',
 		defaults: {
-			name: 'PDF API Hub',
+			name: 'HTML > PDF',
 		},
 		inputs: [NodeConnectionTypes.Main],
 		outputs: [NodeConnectionTypes.Main],
