@@ -15,6 +15,7 @@ export class PdfSplitMerge implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'PDF Api Hub',
 		name: 'pdfSplitMerge',
+		subtitle: '={{$parameter["operation"]}}',
 		icon: { light: 'file:../../icons/pdfhub.light.svg', dark: 'file:../../icons/pdfhub.dark.svg' },
 		group: ['transform'],
 		version: 1,
