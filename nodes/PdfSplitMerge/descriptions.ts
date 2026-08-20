@@ -163,6 +163,12 @@ export const operationProperties: INodeProperties[] = [
 		},
 		options: [
 			{
+				name: 'Analyze Document',
+				value: 'analyzeDocument',
+				description: 'Extract forms, tables, answers, signatures, and layout with AWS Textract',
+				action: 'Analyze a PDF document',
+			},
+			{
 				name: 'PDF OCR Parse',
 				value: 'pdfOcrParse',
 				description: 'Parse text from PDFs, including scanned pages',

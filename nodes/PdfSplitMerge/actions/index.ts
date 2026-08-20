@@ -2,6 +2,7 @@ import type { IExecuteFunctions, INodeExecutionData, INodeProperties, JsonObject
 import { NodeOperationError, NodeApiError } from 'n8n-workflow';
 
 import * as generatePdf from './generatePdf';
+import * as analyzeDocument from './analyzeDocument';
 import * as mergePdf from './mergePdf';
 import * as splitPdf from './splitPdf';
 import * as compressPdf from './compressPdf';
@@ -45,6 +46,7 @@ type ActionHandler = (
  * Combined descriptions from all action modules.
  */
 export const allActionDescriptions: INodeProperties[] = [
+	...analyzeDocument.description,
 	...addWatermark.description,
 	...compressPdf.description,
 	...documentSimilarity.description,
@@ -91,6 +93,7 @@ const actionMap: Record<string, ActionHandler> = {
 	urlToImage: generateImage.execute,
 
 	// OCR
+	analyzeDocument: analyzeDocument.execute as ActionHandler,
 	pdfOcrParse: pdfOcrParse.execute as ActionHandler,
 	imageOcrParse: imageOcrParse.execute as ActionHandler,
 
