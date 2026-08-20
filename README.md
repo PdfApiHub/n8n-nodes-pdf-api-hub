@@ -43,7 +43,7 @@ That's it! The node handles everything automatically.
 | 1 | **HTML / URL to PDF** | HTML to PDF, URL to PDF | Render HTML or capture any webpage as a pixel-perfect PDF with custom paper size, margins, fonts, and viewport |
 | 2 | **Sign PDF** | Sign PDF, Add Watermark | Stamp a signature image or overlay text/logo watermarks on every page |
 | 3 | **Screenshot to Image** | URL to Image, HTML to Image | Capture full-page screenshots or render HTML to PNG with retina support |
-| 4 | **OCR** | PDF OCR, Image OCR | Extract text from scanned documents and photos — supports English, Portuguese, Russian, and custom languages |
+| 4 | **OCR** | PDF OCR, Image OCR | Extract PDFs with AWS Textract using page/detail controls; image OCR supports configurable languages |
 | 5 | **Extract Text & Tables** | Parse PDF | Pull text, tables, or structured layout data from any PDF |
 | 6 | **PDF to Excel & More** | PDF → XLSX, CSV, DOCX, TXT, HTML, PPTX | Convert PDFs into editable spreadsheets, Word docs, presentations, and more |
 | 7 | **Merge / Split** | Merge PDF, Split PDF | Combine multiple PDFs or split one into pages, ranges, or equal chunks |

@@ -17,6 +17,7 @@ export const description: INodeProperties[] = [
 		type: 'options',
 		options: [
 			{ name: 'URL (Default)', value: 'url', description: 'Provide a publicly accessible PDF URL' },
+			{ name: 'Base64', value: 'base64', description: 'Provide a base64-encoded PDF or data URL' },
 			{ name: 'Binary File', value: 'file', description: 'Use a PDF file from a previous node\u0027s binary output' },
 		],
 		default: 'url',
@@ -31,6 +32,16 @@ export const description: INodeProperties[] = [
 		placeholder: 'https://pdfapihub.com/sample.pdf',
 		description: 'Public URL of the scanned PDF to extract text from',
 		displayOptions: { show: { operation: ['pdfOcrParse'], ocr_pdf_input_type: ['url'] } },
+	},
+	{
+		displayName: 'Base64 PDF',
+		name: 'ocr_base64_pdf',
+		type: 'string',
+		typeOptions: { rows: 3 },
+		default: '',
+		placeholder: 'data:application/pdf;base64,JVBERi0xLjQK...',
+		description: 'Base64-encoded PDF in raw base64 or data URL format',
+		displayOptions: { show: { operation: ['pdfOcrParse'], ocr_pdf_input_type: ['base64'] } },
 	},
 	{
 		displayName: 'Binary Property Name',
@@ -52,7 +63,7 @@ export const description: INodeProperties[] = [
 		displayOptions: { show: { operation: ['pdfOcrParse'] } },
 	},
 
-	// ─── 3. Language ────────────────────────────────────────────────
+	// Shared Image OCR field retained here because action descriptions are combined.
 	{
 		displayName: 'Language',
 		name: 'ocr_lang',
@@ -67,10 +78,10 @@ export const description: INodeProperties[] = [
 		default: 'eng',
 		placeholder: 'eng+por',
 		description: 'OCR language. Pick from the list or type a custom Tesseract code. Use + to combine: "eng+por", "eng+rus". <a href="https://pdfapihub.com/request-more-fonts" target="_blank">Request more languages</a>.',
-		displayOptions: { show: { operation: ['pdfOcrParse', 'imageOcrParse'] } },
+		displayOptions: { show: { operation: ['imageOcrParse'] } },
 	},
 
-	// ─── 4. Detail & Output ─────────────────────────────────────────
+	// ─── 3. Detail ──────────────────────────────────────────────────
 	{
 		displayName: 'Detail Level',
 		name: 'ocr_detail',
@@ -93,62 +104,7 @@ export const description: INodeProperties[] = [
 		],
 		default: 'json',
 		description: 'Format of the API response',
-		displayOptions: { show: { operation: ['pdfOcrParse', 'imageOcrParse'] } },
-	},
-
-	// ─── 5. Advanced Options ────────────────────────────────────────
-	{
-		displayName: 'Advanced Options',
-		name: 'ocrAdvancedOptions',
-		type: 'collection',
-		placeholder: 'Add Option',
-		default: {},
-		displayOptions: { show: { operation: ['pdfOcrParse'] } },
-		options: [
-			{
-				displayName: 'DPI',
-				name: 'dpi',
-				type: 'number',
-				default: 200,
-				typeOptions: { minValue: 72, maxValue: 400 },
-				description: 'Resolution for rasterising PDF pages before OCR. Higher = better quality but slower. 200 is good for standard docs, use 300+ for fine print.',
-			},
-			{
-				displayName: 'Character Whitelist',
-				name: 'char_whitelist',
-				type: 'string',
-				default: '',
-				placeholder: '0123456789.$,-',
-				description: 'Restrict OCR to only these characters — great for extracting numbers from invoices (e.g. "0123456789.$,-")',
-			},
-			{
-				displayName: 'Page Segmentation Mode (PSM)',
-				name: 'psm',
-				type: 'options',
-				options: [
-					{ name: '3 — Fully Automatic (Default)', value: 3 },
-					{ name: '4 — Single Column', value: 4 },
-					{ name: '6 — Single Block of Text', value: 6 },
-					{ name: '7 — Single Text Line', value: 7 },
-					{ name: '8 — Single Word', value: 8 },
-					{ name: '13 — Raw Line', value: 13 },
-				],
-				default: 3,
-				description: 'How Tesseract segments the page. Change only if default gives poor results.',
-			},
-			{
-				displayName: 'OCR Engine Mode (OEM)',
-				name: 'oem',
-				type: 'options',
-				options: [
-					{ name: '3 — Best Available (Default)', value: 3 },
-					{ name: '1 — LSTM Neural Net', value: 1 },
-					{ name: '0 — Legacy', value: 0 },
-				],
-				default: 3,
-				description: 'Tesseract engine mode. Default (3) auto-selects the best.',
-			},
-		],
+		displayOptions: { show: { operation: ['imageOcrParse'] } },
 	},
 ];
 
@@ -164,41 +120,34 @@ export async function execute(
 	const pdfInputType = this.getNodeParameter('ocr_pdf_input_type', index) as string;
 	const pdfUrl = this.getNodeParameter('ocr_pdf_url', index, '') as string;
 	const pages = this.getNodeParameter('ocr_pages', index, 'all') as string;
-	const lang = this.getNodeParameter('ocr_lang', index, 'eng') as string;
 	const detail = this.getNodeParameter('ocr_detail', index, 'text') as string;
-	const outputFormat = this.getNodeParameter('ocr_output_format', index, 'json') as string;
-
-	// Advanced options (with backward compat for legacy top-level fields)
-	const advanced = this.getNodeParameter('ocrAdvancedOptions', index, {}) as Record<string, unknown>;
-
-	let dpi = advanced.dpi as number | undefined;
-	if (dpi === undefined) {
-		try { dpi = this.getNodeParameter('ocr_dpi', index) as number; } catch { dpi = 200; }
-	}
-
-	let psm = advanced.psm as number | undefined;
-	if (psm === undefined) {
-		try { psm = this.getNodeParameter('ocr_psm', index) as number; } catch { psm = 3; }
-	}
-
-	let oem = advanced.oem as number | undefined;
-	if (oem === undefined) {
-		try { oem = this.getNodeParameter('ocr_oem', index) as number; } catch { oem = 3; }
-	}
-
-	const charWhitelist = (advanced.char_whitelist as string | undefined) ?? '';
+	const savedParameters = this.getNode().parameters as Record<string, unknown>;
+	const getSavedParameter = <T>(name: string): T | undefined => {
+		if (!Object.prototype.hasOwnProperty.call(savedParameters, name)) return undefined;
+		return this.getNodeParameter(name, index) as T;
+	};
+	const advanced = getSavedParameter<Record<string, unknown>>('ocrAdvancedOptions') ?? {};
+	const lang = getSavedParameter<string>('ocr_lang');
+	const outputFormat = getSavedParameter<string>('ocr_output_format');
+	const dpi = (advanced.dpi as number | undefined) ?? getSavedParameter<number>('ocr_dpi');
+	const psm = (advanced.psm as number | undefined) ?? getSavedParameter<number>('ocr_psm');
+	const oem = (advanced.oem as number | undefined) ?? getSavedParameter<number>('ocr_oem');
+	const charWhitelist = advanced.char_whitelist as string | undefined;
 
 	const body: Record<string, unknown> = {
 		pages,
-		lang,
-		dpi,
-		psm,
-		oem,
 		detail,
-		output_format: outputFormat,
 	};
+	if (lang !== undefined) body.lang = lang;
+	if (dpi !== undefined) body.dpi = dpi;
+	if (psm !== undefined) body.psm = psm;
+	if (oem !== undefined) body.oem = oem;
+	if (outputFormat !== undefined) body.output_format = outputFormat;
 	if (charWhitelist) body.char_whitelist = charWhitelist;
 	if (pdfInputType === 'url') body.url = normalizeUrl(pdfUrl);
+	if (pdfInputType === 'base64') {
+		body.base64_pdf = this.getNodeParameter('ocr_base64_pdf', index, '') as string;
+	}
 
 	const requestOptions =
 		pdfInputType === 'file'
