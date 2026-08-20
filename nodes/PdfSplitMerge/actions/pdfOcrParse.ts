@@ -62,6 +62,13 @@ export const description: INodeProperties[] = [
 		description: 'Which pages to OCR. Supports "all", single page ("3"), range ("1-5"), or mixed ("1,3,5-8").',
 		displayOptions: { show: { operation: ['pdfOcrParse'] } },
 	},
+	{
+		displayName: 'AWS Textract automatically detects English, French, German, Italian, Portuguese, and Spanish. Language selection is not required.',
+		name: 'pdfOcrLanguageNotice',
+		type: 'notice',
+		default: '',
+		displayOptions: { show: { operation: ['pdfOcrParse'] } },
+	},
 
 	// Shared Image OCR field retained here because action descriptions are combined.
 	{
